@@ -36,7 +36,6 @@ void CDisplayView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT2, m_user);
 	DDX_Text(pDX, IDC_EDIT3, m_password);
 	DDX_Control(pDX, IDC_LIST1, FileName);
-	//DDX_Control(pDX, IDC_IPADDRESS1, ServerIP);
 	DDX_IPAddress(pDX, IDC_IPADDRESS1, m_ip);
 	DDX_Text(pDX, IDC_EDIT4, m_SPort);
 	DDX_Text(pDX, IDC_EDIT5, m_LPort);
