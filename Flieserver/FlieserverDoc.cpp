@@ -12,8 +12,6 @@
 
 #include "FlieserverDoc.h"
 
-using namespace std;
-stringstream sstream;
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -31,21 +29,17 @@ END_MESSAGE_MAP()
 CFlieserverDoc::CFlieserverDoc() noexcept
 {
 	// TODO: 在此添加一次性构造代码
-	//CFlieserverDoc::BroseAllFiles("..\\m_filepath");
-	SetTitle(TEXT("fileserver"));
-	m_UserInfo.initDoc();//本地用户信息
-	//m_linkInfo.SUMap.clear();//连接-用户名信息
-	//m_linkInfo.SFMap.clear();//s-相关文件
-	m_Comparison.clear();
-	pView = nullptr;
 
+	SetTitle(TEXT("fileserver"));
+	pView = nullptr;
+	shared_path = "..\\sever_shared_path\\";
 }
 
 CFlieserverDoc::~CFlieserverDoc()
 {
 }
 
-CString CFlieserverDoc::PathtoList(CString path = "..\\m_filepath\\*") // 获取指定目录下的文件列表，文件之间用|隔开
+CString CFlieserverDoc::PathtoList(CString path) // 获取指定目录下的文件列表，文件之间用|隔开
 {
 	CString file_list; // 文件列表
 	CFileFind file_find; // 创建一个CFileFind实例
@@ -66,6 +60,7 @@ CString CFlieserverDoc::PathtoList(CString path = "..\\m_filepath\\*") // 获取
 		else
 		{
 			strpath = file_find.GetFilePath(); //获取到的是绝对路径
+
 			file_list += strpath;
 			file_list += '|';
 		}
@@ -151,19 +146,27 @@ void CFlieserverDoc::state1_fsm(SOCKET hSocket)
 		break;
 	case 1://用户名到来
 		{
+			using namespace std;
 			int namelen = recvbuf[3];
 			assert(namelen >= 0 && namelen <= MAX_BUF_SIZE);
 			string username(&recvbuf[4], namelen);
 			if (m_UserInfo.UserDocMap.count(username))
 			{
 				m_linkInfo.SUMap[hSocket]->username = username;
-				//准备密码
-				string password;
-				password = m_UserInfo.UserDocMap[username];
+				string password = m_UserInfo.UserDocMap[username];
+				//处理密码，转换成可以计算的
 				int t_p = 0;
-				sstream << password;
-				sstream >> t_p;//转换成整数
-				sstream.clear();
+				try
+				{
+					t_p = std::stoi(password);
+				}
+				catch (const std::invalid_argument&)
+				{
+					for (const auto c : password)
+					{
+						t_p += c;
+					}
+				}
 
 				//准备要发送的质询数据，N，N个随机数
 				u_int seed;//保证随机数足够随机
@@ -171,12 +174,11 @@ void CFlieserverDoc::state1_fsm(SOCKET hSocket)
 				srand(seed);
 				constexpr auto MIN_VALUE = 1;
 				constexpr auto MAX_VALUE = 20;
-				u_int num_N = rand() % (MAX_VALUE - MIN_VALUE + 1) + MIN_VALUE;
+				unsigned char num_N = (unsigned char)rand() % (MAX_VALUE - MIN_VALUE + 1) + MIN_VALUE;
 
 				sendbuf[0] = 2;//填事件号
-				//send_packet_len=4+num_N*2
 				temp = &sendbuf[1];
-				*(u_short*)temp = htons(4 + num_N * 2);
+				*(u_short*)temp = htons(4 + num_N * 2);//send_packet_len=4+num_N*2
 				sendbuf[3] = num_N;//整数个数
 				temp = sendbuf + 4;//指针就位
 
@@ -195,7 +197,7 @@ void CFlieserverDoc::state1_fsm(SOCKET hSocket)
 				send(hSocket, sendbuf, 4 + num_N * 2, 0);//发送质询报文
 
 				correct_result = correct_sum ^ correct_password;//异或
-				m_Comparison.insert(pair<SOCKET, string>(hSocket, to_string(correct_result)));//保存下来
+				m_linkInfo.SUMap[hSocket]->comparison = correct_result;
 				m_linkInfo.SUMap[hSocket]->state = 2;//状态转移
 				TRACE("Challenge finish");
 			}
@@ -235,51 +237,45 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 	{
 	case 3://质询结果到来
 		{
-			if (m_Comparison.count(hSocket))
-			{
-				temp = recvbuf + 3;
-				u_short answer = ntohs(*(u_short*)temp);
-				//用完要清空
-				u_short t_result = 0;
-				sstream << m_Comparison[hSocket];
-				sstream >> t_result;//转换成2字节整数
-				sstream.clear();
-				if (answer == t_result)
-				{
-					sendbuf[0] = 4;//填事件号
-					temp = &sendbuf[1];
-					*(u_short*)temp = htons(4);//packet_len=4
-					sendbuf[3] = 1;//认证成功
-					send(hSocket, sendbuf, 4, 0);//发送
-					m_linkInfo.SUMap[hSocket]->state = 3;//进入主状态
-					TRACE("user online");
-					pView->UserName.AddString(inet_ntoa(m_linkInfo.SUMap[hSocket]->ip)); // 添加在线用户的IP
-					
-					//用户在线之后立即给用户发送一份目录。这里利用recvbuf发送报文
-					memset(recvbuf, '\0', 5);//清空字符数组
-					recvbuf[0] = 6;
-					temp = &recvbuf[1];
-					CString m_list = PathtoList();//发送默认路径下的目录
-					strLen = m_list.GetLength();
-					assert(strLen > 0);//若为空目录，则要特殊处理
-					*(u_short*)temp = htons(strLen + 3);//packet_len=strLen + 3
-					strcpy_s(recvbuf + 3, strLen + 1, m_list);
-					send(hSocket, recvbuf, strLen + 3, 0);
-					//用户在线后立即为用户建立文件相关信息档案
-					Fileinfo* m_file = new Fileinfo;
-					m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
+			temp = recvbuf + 3;
+			u_short answer = ntohs(*(u_short*)temp);
 
-				}
-				else
-				{
-					TRACE("质询结果错");
-					//错了，就删除用户名，关闭连接。要记得释放内存！！
-					delete m_linkInfo.SUMap[hSocket];
-					m_linkInfo.SUMap.erase(hSocket);
-					closesocket(hSocket);
-				}
+			if (answer == m_linkInfo.SUMap[hSocket]->comparison)
+			{
+				sendbuf[0] = 4;//填事件号
+				temp = &sendbuf[1];
+				*(u_short*)temp = htons(4);//packet_len=4
+				sendbuf[3] = 1;//认证成功
+				send(hSocket, sendbuf, 4, 0);//发送
+
+				m_linkInfo.SUMap[hSocket]->state = 3;//进入主状态
+				Fileinfo* m_file = new Fileinfo;//用户在线后立即为用户建立文件相关信息档案
+				m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
+				pView->box_UserOL.AddString((m_linkInfo.SUMap[hSocket]->username).c_str()); // 添加在线用户的用户名
+				shared_UserOL.push_front(m_linkInfo.SUMap[hSocket]->username);
+
+				//用户在线之后立即给用户发送一份共享目录。这里利用recvbuf发送报文
+				memset(recvbuf, '\0', 5);//清空字符数组
+				recvbuf[0] = 6;
+				temp = &recvbuf[1];
+				CString m_list = PathtoList(shared_path + '*');
+				strLen = m_list.GetLength();
+				assert(strLen > 0);//若为空目录，则要特殊处理
+				*(u_short*)temp = htons(strLen + 3);//packet_len=strLen + 3
+				strcpy_s(recvbuf + 3, strLen + 1, m_list);
+				send(hSocket, recvbuf, strLen + 3, 0);
+
+				//按理说，还要发独享目录哦！！！
+
 			}
-			else TRACE("非法套接字的质询结果");
+			else
+			{
+				TRACE("质询结果错");
+				//错了，就删除用户，关闭连接。要记得释放内存！！
+				delete m_linkInfo.SUMap[hSocket];
+				m_linkInfo.SUMap.erase(hSocket);
+				closesocket(hSocket);
+			}
 		}
 		break;
 	default:
@@ -313,23 +309,24 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 	case 5://请求目录
 		{
 			CString m_recvdir(&recvbuf[3], packet_len - 3);
-			if (m_recvdir.Find("m_filepath") != -1) //如果请求的目录合法
+			if (m_recvdir.Find(shared_path) != -1
+				|| m_recvdir.Find(m_linkInfo.SUMap[hSocket]->exclusive_path) != -1) 
+				//如果请求的目录合法,是共享或独享目录
 			{
 				sendbuf[0] = 6;
 				temp = &sendbuf[1];
-				
-				CString m_send = PathtoList(m_recvdir); // 发送该目录下的文件列表给客户端，目录已经有"\\*"了
+
+				CString m_send = PathtoList(m_recvdir + '*'); // 发送该目录下的文件列表给客户端，目录已经有"\\*"了
 				strLen = m_send.GetLength();//重新使用strLen
 				assert(strLen > 0);//若为空目录，则要特殊处理
 				*(u_short*)temp = htons(strLen + 3);
-				//temp = m_send.GetBuffer();
 				//使用strcpy,长度全都需要+1！
 				strcpy_s(&sendbuf[3], strLen + 1, m_send);
-				//m_send.ReleaseBuffer();
 				send(hSocket, sendbuf, strLen + 3, 0);
-				m_linkInfo.SUMap[hSocket]->strdirpath = m_recvdir.Left(m_recvdir.GetLength() - 1);// 让服务器用strdirpath记住用户正在看的目录，去掉'*'
+				m_linkInfo.SUMap[hSocket]->current_path = m_recvdir.Left(m_recvdir.GetLength() - 1);
+				// 让服务器用strdirpath记住用户正在看的目录，去掉'*'
 			}
-			else{}//请求目录不合法
+			else;//请求目录不合法
 		}
 		break;
 	case 11://请求下载
@@ -339,7 +336,7 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 			CString downloadName(&recvbuf[5], namelen);
 			//本地打开文件
 			if (!(m_linkInfo.SFMap[hSocket]->downloadFile.Open(
-				m_linkInfo.SUMap[hSocket]->strdirpath + downloadName,
+				m_linkInfo.SUMap[hSocket]->current_path + downloadName,
 				CFile::modeRead | CFile::typeBinary, &m_linkInfo.SFMap[hSocket]->errFile)))
 			{
 				char errOpenFile[256];
@@ -406,7 +403,7 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 			m_linkInfo.SFMap[hSocket]->leftToRecv = fileLength;//会自动转换类型
 			//本地打开，接收上传文件
 			if (!(m_linkInfo.SFMap[hSocket]->uploadFile.Open(
-				m_linkInfo.SUMap[hSocket]->strdirpath + uploadName,
+				m_linkInfo.SUMap[hSocket]->current_path + uploadName,
 				CFile::modeCreate | CFile::modeWrite | CFile::typeBinary, 
 				&m_linkInfo.SFMap[hSocket]->errFile)))
 			{
@@ -444,7 +441,7 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 	case 19://请求删除
 		{
 			CString m_filename(&recvbuf[3], packet_len - 3);//不带路径的文件名
-			m_filename = m_linkInfo.SUMap[hSocket]->strdirpath + m_filename;//带路径的文件名
+			m_filename = m_linkInfo.SUMap[hSocket]->current_path + m_filename;//带路径的文件名
 			if (DeleteFile(m_filename))//WIN32 API
 			{//成功
 				sendbuf[0] = 20;
@@ -457,7 +454,7 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 				recvbuf[0] = 6;
 				temp = &recvbuf[1];
 
-				CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->strdirpath + '*'); // 发送该目录下的文件列表给客户端，目录已经有"\\*"了
+				CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path + '*');
 				strLen = m_send.GetLength();//重新使用strLen
 				assert(strLen > 0);//若为空目录，则要特殊处理
 				*(u_short*)temp = htons(strLen + 3);
@@ -541,7 +538,7 @@ void CFlieserverDoc::state4_fsm(SOCKET hSocket)
 			//上传完成，应该立即向client发送一次目录，此处利用了recvbuf
 			recvbuf[0] = 6;
 			temp = &recvbuf[1];
-			CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->strdirpath + '*'); // 发送该目录下的文件列表给客户端，目录已经有"\\*"了
+			CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path + '*'); 
 			strLen = m_send.GetLength();//重新使用strLen
 			assert(strLen > 0);//若为空目录，则要特殊处理
 			*(u_short*)temp = htons(strLen + 3);

@@ -2,18 +2,18 @@
 #include "pch.h"
 
 
-class User
+struct User
 {
-public:
 	IN_ADDR ip = { 0 };
 	WORD port = 0;//WORD等同于unsigned short
 	std::string username = "";
 	int state = 0;
-	CString strdirpath = ""; // 文件路径
+	CString exclusive_path = ""; // 独享目录
+	CString current_path = ""; // 当前用户正在看的目录
+	u_short comparison = 0; //client应该返回的质询结果
 };
-class Fileinfo 
+struct Fileinfo
 {
-public:
 	// 通用
 	CFileException errFile;
 	CHAR sequence = 0;
@@ -34,7 +34,6 @@ public:
 public:
 	std::unordered_map<std::string, std::string> UserDocMap;
 	void writeP();
-	void initDoc();
 
 };
 
@@ -42,6 +41,7 @@ class LinkInfo
 {
 public:
 	~LinkInfo();
+	void myclear();
 	std::unordered_map<SOCKET, User*> SUMap;
 	std::unordered_map<SOCKET, Fileinfo*> SFMap;
 };

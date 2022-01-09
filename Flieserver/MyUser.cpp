@@ -5,6 +5,8 @@
 
 UserDoc::UserDoc()
 {
+	//UserDocMap.insert(std::pair<std::string, std::string>("test1", "12345"));
+	//UserDocMap.insert(std::pair<std::string, std::string>("test2", "12345"));
 }
 
 UserDoc::~UserDoc()
@@ -15,21 +17,28 @@ void UserDoc::writeP()
 {
 }
 
-void UserDoc::initDoc()
-{
-	UserDocMap.insert(std::pair<std::string, std::string>("test", "12345"));
-}
 
 LinkInfo::~LinkInfo()
 {//为了保证内存安全
-	for (auto &it: SUMap)
+	myclear();
+}
+void LinkInfo::myclear() {
+	if (!SUMap.empty())
 	{
-		delete it.second;
+		for (auto& it : SUMap)
+		{
+			closesocket(it.first);
+			delete it.second;
+		}
+		SUMap.clear();
 	}
-	SUMap.clear();
-	for (auto& it : SFMap)
+	if (!SFMap.empty()) 
 	{
-		delete it.second;
+		for (auto& it : SFMap)
+		{
+			closesocket(it.first);//释放套接字资源
+			delete it.second;
+		}
+		SFMap.clear();
 	}
-	SFMap.clear();
 }

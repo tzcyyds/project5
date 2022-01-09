@@ -33,14 +33,18 @@ public:
 	virtual void OnInitialUpdate();
 
 protected:
+	SOCKET hListenSock;
 	SOCKET hCommSock;
 	SOCKADDR_IN clntAdr;
 	int clntAdrLen;
 public:
-	CListBox UserName;
+	CListBox box_UserOL;
+	CListBox m_accounts;
 	UINT m_port;
 	afx_msg void OnBnClickedListen();
 	afx_msg void OnBnClickedStop();
+	afx_msg void OnBnClickedDecrypt();
+	CString m_key;
 };
 
 

@@ -5,6 +5,7 @@
 #include "Flieserver.h"
 #include "CDisplayView.h"
 #include "FlieserverDoc.h"
+#include <fstream>
 
 #define WM_SOCK WM_USER + 100// 自定义消息，为避免冲突，最好100以上
 // CDispalyView
@@ -14,6 +15,7 @@ IMPLEMENT_DYNCREATE(CDisplayView, CFormView)
 CDisplayView::CDisplayView()
 	: CFormView(IDD_DISPLAYVIEW)
 	, m_port(9190)
+	, m_key(_T(""))
 {
 	hCommSock = 0;
 	memset(&clntAdr, 0, sizeof(clntAdr));
@@ -27,13 +29,16 @@ CDisplayView::~CDisplayView()
 void CDisplayView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_USEROL, UserName);
+	DDX_Control(pDX, IDC_USEROL, box_UserOL);
 	DDX_Text(pDX, IDC_PORT, m_port);
+	DDX_Control(pDX, IDC_ACCOUNTS, m_accounts);
+	DDX_Text(pDX, IDC_KEY, m_key);
 }
 
 BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_LISTEN, &CDisplayView::OnBnClickedListen)
 	ON_BN_CLICKED(IDC_STOP, &CDisplayView::OnBnClickedStop)
+	ON_BN_CLICKED(IDC_DECRYPT, &CDisplayView::OnBnClickedDecrypt)
 END_MESSAGE_MAP()
 
 
@@ -78,63 +83,105 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		switch (newEvent)
 		{
 		case FD_ACCEPT:
+		{
+			hCommSock = accept(hSocket, (sockaddr*)&clntAdr, &clntAdrLen);
+			if (hCommSock == SOCKET_ERROR)
 			{
-				hCommSock = accept(hSocket, (sockaddr*)&clntAdr, &clntAdrLen);
-				if (hCommSock == SOCKET_ERROR)
-				{
-					closesocket(hSocket);
-					break;
-				}
-
-				//hCommSock进入连接建立状态,等待用户名
-				User* p_user=new User;
-				p_user->ip = clntAdr.sin_addr;
-				p_user->port = clntAdr.sin_port;
-				p_user->username = "WAIT";
-				p_user->state = 1;//
-				p_user->strdirpath = "..\\m_filepath\\";//默认路径
-				pDoc->m_linkInfo.SUMap.insert(std::pair<SOCKET, User*>(hCommSock, p_user));
-				TRACE("wait account");
+				closesocket(hSocket);
+				break;
 			}
+
+			//hCommSock进入连接建立状态,等待用户名
+			User* p_user=new User;
+			p_user->ip = clntAdr.sin_addr;
+			p_user->port = clntAdr.sin_port;
+			p_user->username = "WAIT";
+			p_user->state = 1;//
+			//sprintf_s(p_user->strdirpath,"..\\%s_exclusive_path\\",);
+			//p_user->strdirpath = "..\\_exclusive_path\\";//独享路径
+			p_user->comparison = 0xff;
+			pDoc->m_linkInfo.SUMap.insert(std::pair<SOCKET, User*>(hCommSock, p_user));
+			TRACE("wait account");
+		}
 			break;
 		case FD_READ:
+		{
+			//设定状态
+			int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;
+			//switch 根据状态
+			switch (m_state)
 			{
-				//不提取事件号了！
-				//设定状态
-				int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;
-				//switch 根据状态
-				switch (m_state)
-				{
-				case 0://质询出错
-					break;
-				case 1://等待用户名，并发送质询
-					pDoc->state1_fsm(hSocket);
-					//连接建立状态
-					break;
-				case 2://等待质询结果
-					pDoc->state2_fsm(hSocket);
-					//等待质询结果状态
-					break;
-				case 3:
-					//用户已在线，等待其它指令。
-					pDoc->state3_fsm(hSocket);//调用主状态处理函数
-					break;
-				case 4:
-					//在接收上传文件数据状态，接收数据
-					pDoc->state4_fsm(hSocket);
-					break;
-				case 5:
-					//等待下载数据确认状态
-					pDoc->state5_fsm(hSocket);
-					break;
-				default:
-					break;
-				}
+			case 0://不该有的状态。
+				break;
+			case 1://等待用户名，并发送质询
+				pDoc->state1_fsm(hSocket);
+				//连接建立状态
+				break;
+			case 2://等待质询结果
+				pDoc->state2_fsm(hSocket);
+				//等待质询结果状态
+				break;
+			case 3:
+				//用户已在线，等待其它指令。
+				pDoc->state3_fsm(hSocket);//调用主状态处理函数
+				break;
+			case 4:
+				//在接收上传文件数据状态，接收数据
+				pDoc->state4_fsm(hSocket);
+				break;
+			case 5:
+				//等待下载数据确认状态
+				pDoc->state5_fsm(hSocket);
+				break;
+			default:
+				break;
 			}
+		}
 			break;
 		case FD_CLOSE:
-			closesocket(hSocket);
-			break;
+		{	
+			int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;//只要连接上了，有socket，就有user结构体
+			switch (m_state)
+			{
+			case 0://不该有的状态。
+				MessageBox("state = 0 ？？？");
+				break;
+			case 1://等待用户名
+				//break;//合并
+			case 2://等待质询结果
+			{
+				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
+				pDoc->m_linkInfo.SUMap.erase(hSocket);
+			}
+				break;
+			case 3:
+			{
+				pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				box_UserOL.ResetContent();//更新box
+				for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
+				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
+				pDoc->m_linkInfo.SUMap.erase(hSocket);
+				delete pDoc->m_linkInfo.SFMap.at(hSocket);//一定成功
+				pDoc->m_linkInfo.SFMap.erase(hSocket);
+			}
+				break;
+			case 4://接收上传文件数据状态
+			{
+				MessageBox("close while upload?");
+			}
+				break;
+			case 5://等待下载数据确认状态
+			{
+				MessageBox("close while download?");
+			}
+				break;
+			default:
+				break;
+			}
+			WSAAsyncSelect(hSocket, m_hWnd, 0, 0);//取消注册
+			closesocket(hSocket);//释放socket资源
+		}
+			break;//中断的是case FD_CLOSE
 		}
 		break;//中断的是case WM_SOCK:
 	}
@@ -155,7 +202,6 @@ void CDisplayView::OnBnClickedListen()
 	servAdr.sin_family = AF_INET;
 	servAdr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servAdr.sin_port = htons(m_port);
-	SOCKET hListenSock;
 	hListenSock = socket(AF_INET, SOCK_STREAM, 0);
 	if (hListenSock == INVALID_SOCKET)
 	{
@@ -183,5 +229,65 @@ void CDisplayView::OnBnClickedListen()
 
 void CDisplayView::OnBnClickedStop()
 {
+	CFlieserverDoc* pDoc = (CFlieserverDoc*)GetDocument();
+	bool flag = false;
+	//保证大家都在主状态，不能还有什么需要等待的事件。
+	for (const auto& it: pDoc->m_linkInfo.SUMap)
+	{
+		if (it.second->state != 3) flag = true;
+	}
+	if(flag) MessageBox("cannot stop listen");
+	else
+	{
+		//结束监听
+		closesocket(hListenSock);
+		pDoc->m_linkInfo.myclear();
+		box_UserOL.ResetContent();
+		MessageBox("already stop");
+	}
+}
+
+
+void split(const std::string& s, std::vector<std::string>& tokens, char delim = ' ') {
+	tokens.clear();
+	auto string_find_first_not = [s, delim](size_t pos = 0) -> size_t {
+		for (size_t i = pos; i < s.size(); i++) {
+			if (s[i] != delim) return i;
+		}
+		return std::string::npos;
+	};
+	size_t lastPos = string_find_first_not(0);
+	size_t pos = s.find(delim, lastPos);
+	while (lastPos != std::string::npos) {
+		tokens.emplace_back(s.substr(lastPos, pos - lastPos));
+		lastPos = string_find_first_not(pos);
+		pos = s.find(delim, lastPos);
+	}
+}
+void CDisplayView::OnBnClickedDecrypt()
+{
 	// TODO: 在此添加控件通知处理程序代码
+	CFlieserverDoc* pDoc = (CFlieserverDoc*)GetDocument();
+	using namespace std;
+	ifstream in(".\\accounts.txt");
+	string accstr;
+	in >> accstr;
+	in.close();
+	vector<string> m_tokens;
+	split(accstr, m_tokens, ';');
+
+	for (const auto& it : m_tokens) {
+		string::size_type subpos = 0;
+		string username, password;
+		if ((subpos = it.find('-'))
+			!= string::npos)
+		{
+			username = it.substr(0, subpos);
+			password = it.substr(subpos + 1);
+			pDoc->m_UserInfo.UserDocMap.insert(std::pair<std::string, std::string>(username, password));
+			m_accounts.AddString((username + ':' + password).c_str());
+		}
+		else TRACE("file error");
+	}
+
 }
