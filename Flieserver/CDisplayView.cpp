@@ -220,7 +220,7 @@ void CDisplayView::OnBnClickedDecrypt()
 	vector<string> m_tokens;
 	split(accstr, m_tokens, ';');
 
-	for (auto& it : m_tokens) {
+	for (const auto& it : m_tokens) {
 		string::size_type subpos = 0;
 		string username, password;
 		if ((subpos = it.find('-'))
