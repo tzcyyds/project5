@@ -41,6 +41,7 @@ class LinkInfo
 {
 public:
 	~LinkInfo();
+	void myclear();
 	std::unordered_map<SOCKET, User*> SUMap;
 	std::unordered_map<SOCKET, Fileinfo*> SFMap;
 };

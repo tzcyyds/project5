@@ -20,20 +20,25 @@ void UserDoc::writeP()
 
 LinkInfo::~LinkInfo()
 {//为了保证内存安全
+	myclear();
+}
+void LinkInfo::myclear() {
 	if (!SUMap.empty())
 	{
 		for (auto& it : SUMap)
 		{
+			closesocket(it.first);
 			delete it.second;
 		}
 		SUMap.clear();
 	}
-	if (!SFMap.empty()) {
+	if (!SFMap.empty()) 
+	{
 		for (auto& it : SFMap)
 		{
+			closesocket(it.first);//释放套接字资源
 			delete it.second;
 		}
 		SFMap.clear();
 	}
-
 }

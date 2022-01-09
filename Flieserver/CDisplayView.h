@@ -33,6 +33,7 @@ public:
 	virtual void OnInitialUpdate();
 
 protected:
+	SOCKET hListenSock;
 	SOCKET hCommSock;
 	SOCKADDR_IN clntAdr;
 	int clntAdrLen;

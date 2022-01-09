@@ -106,13 +106,12 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case FD_READ:
 		{
-			//不提取事件号了！
 			//设定状态
 			int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;
 			//switch 根据状态
 			switch (m_state)
 			{
-			case 0://质询出错
+			case 0://不该有的状态。
 				break;
 			case 1://等待用户名，并发送质询
 				pDoc->state1_fsm(hSocket);
@@ -141,25 +140,48 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case FD_CLOSE:
 		{	
-			closesocket(hSocket);//hSocket可能在线，也可能还未认证
-			pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
-			box_UserOL.ResetContent();
-			for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
-			try {
-				delete pDoc->m_linkInfo.SUMap.at(hSocket);
+			int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;//只要连接上了，有socket，就有user结构体
+			switch (m_state)
+			{
+			case 0://不该有的状态。
+				MessageBox("state = 0 ？？？");
+				break;
+			case 1://等待用户名
+				//break;//合并
+			case 2://等待质询结果
+			{
+				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SUMap.erase(hSocket);
-				auto& tmp= pDoc->m_linkInfo.SFMap.at(hSocket);    // vector::at throws an out-of-range
-				delete tmp;
+			}
+				break;
+			case 3:
+			{
+				pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				box_UserOL.ResetContent();//更新box
+				for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
+				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
+				pDoc->m_linkInfo.SUMap.erase(hSocket);
+				delete pDoc->m_linkInfo.SFMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SFMap.erase(hSocket);
 			}
-			catch (const std::out_of_range& oor) {
-				std::cerr << "Out of Range error: " << oor.what() << '\n';
+				break;
+			case 4://接收上传文件数据状态
+			{
+				MessageBox("close while upload?");
 			}
-			catch (const std::exception& error) {
-				std::cerr << "error: " << error.what() << '\n';
+				break;
+			case 5://等待下载数据确认状态
+			{
+				MessageBox("close while download?");
 			}
+				break;
+			default:
+				break;
+			}
+			WSAAsyncSelect(hSocket, m_hWnd, 0, 0);//取消注册
+			closesocket(hSocket);//释放socket资源
 		}
-			break;
+			break;//中断的是case FD_CLOSE
 		}
 		break;//中断的是case WM_SOCK:
 	}
@@ -180,7 +202,6 @@ void CDisplayView::OnBnClickedListen()
 	servAdr.sin_family = AF_INET;
 	servAdr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servAdr.sin_port = htons(m_port);
-	SOCKET hListenSock;
 	hListenSock = socket(AF_INET, SOCK_STREAM, 0);
 	if (hListenSock == INVALID_SOCKET)
 	{
@@ -208,7 +229,22 @@ void CDisplayView::OnBnClickedListen()
 
 void CDisplayView::OnBnClickedStop()
 {
-	// TODO: 在此添加控件通知处理程序代码
+	CFlieserverDoc* pDoc = (CFlieserverDoc*)GetDocument();
+	bool flag = false;
+	//保证大家都在主状态，不能还有什么需要等待的事件。
+	for (const auto& it: pDoc->m_linkInfo.SUMap)
+	{
+		if (it.second->state != 3) flag = true;
+	}
+	if(flag) MessageBox("cannot stop listen");
+	else
+	{
+		//结束监听
+		closesocket(hListenSock);
+		pDoc->m_linkInfo.myclear();
+		box_UserOL.ResetContent();
+		MessageBox("already stop");
+	}
 }
 
 

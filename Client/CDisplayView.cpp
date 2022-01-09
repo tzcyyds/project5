@@ -112,8 +112,11 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case FD_CLOSE:
+			FileName.ResetContent();
+			WSAAsyncSelect(hCommSock, m_hWnd, 0, 0);//取消注册
 			closesocket(hSocket);
-			MessageBox("Connection closed", "Client", MB_OK);
+			client_state = 0;
+			MessageBox("Connection closed");
 			break;
 		}
 		break;
@@ -198,7 +201,10 @@ void CDisplayView::OnBnClickedDisconnect()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	if (client_state == 3) {
-
+		WSAAsyncSelect(hCommSock, m_hWnd, 0, 0);//取消注册
+		closesocket(hCommSock);
+		client_state = 0;
+		FileName.ResetContent();
 	}
 	else;
 	return;

@@ -247,8 +247,10 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 				*(u_short*)temp = htons(4);//packet_len=4
 				sendbuf[3] = 1;//认证成功
 				send(hSocket, sendbuf, 4, 0);//发送
+
 				m_linkInfo.SUMap[hSocket]->state = 3;//进入主状态
-				TRACE("user online");
+				Fileinfo* m_file = new Fileinfo;//用户在线后立即为用户建立文件相关信息档案
+				m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
 				pView->box_UserOL.AddString((m_linkInfo.SUMap[hSocket]->username).c_str()); // 添加在线用户的用户名
 				shared_UserOL.push_front(m_linkInfo.SUMap[hSocket]->username);
 
@@ -264,11 +266,6 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 				send(hSocket, recvbuf, strLen + 3, 0);
 
 				//按理说，还要发独享目录哦！！！
-				
-
-				//用户在线后立即为用户建立文件相关信息档案
-				Fileinfo* m_file = new Fileinfo;
-				m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
 
 			}
 			else
