@@ -29,7 +29,7 @@ CDisplayView::~CDisplayView()
 void CDisplayView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_USEROL, UserOL);
+	DDX_Control(pDX, IDC_USEROL, box_UserOL);
 	DDX_Text(pDX, IDC_PORT, m_port);
 	DDX_Control(pDX, IDC_ACCOUNTS, m_accounts);
 	DDX_Text(pDX, IDC_KEY, m_key);
@@ -83,62 +83,82 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		switch (newEvent)
 		{
 		case FD_ACCEPT:
+		{
+			hCommSock = accept(hSocket, (sockaddr*)&clntAdr, &clntAdrLen);
+			if (hCommSock == SOCKET_ERROR)
 			{
-				hCommSock = accept(hSocket, (sockaddr*)&clntAdr, &clntAdrLen);
-				if (hCommSock == SOCKET_ERROR)
-				{
-					closesocket(hSocket);
-					break;
-				}
-
-				//hCommSock进入连接建立状态,等待用户名
-				User* p_user=new User;
-				p_user->ip = clntAdr.sin_addr;
-				p_user->port = clntAdr.sin_port;
-				p_user->username = "WAIT";
-				p_user->state = 1;//
-				p_user->strdirpath = "..\\m_filepath\\";//默认路径
-				pDoc->m_linkInfo.SUMap.insert(std::pair<SOCKET, User*>(hCommSock, p_user));
-				TRACE("wait account");
+				closesocket(hSocket);
+				break;
 			}
+
+			//hCommSock进入连接建立状态,等待用户名
+			User* p_user=new User;
+			p_user->ip = clntAdr.sin_addr;
+			p_user->port = clntAdr.sin_port;
+			p_user->username = "WAIT";
+			p_user->state = 1;//
+			//sprintf_s(p_user->strdirpath,"..\\%s_exclusive_path\\",);
+			//p_user->strdirpath = "..\\_exclusive_path\\";//独享路径
+			p_user->comparison = 0xff;
+			pDoc->m_linkInfo.SUMap.insert(std::pair<SOCKET, User*>(hCommSock, p_user));
+			TRACE("wait account");
+		}
 			break;
 		case FD_READ:
+		{
+			//不提取事件号了！
+			//设定状态
+			int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;
+			//switch 根据状态
+			switch (m_state)
 			{
-				//不提取事件号了！
-				//设定状态
-				int m_state = pDoc->m_linkInfo.SUMap[hSocket]->state;
-				//switch 根据状态
-				switch (m_state)
-				{
-				case 0://质询出错
-					break;
-				case 1://等待用户名，并发送质询
-					pDoc->state1_fsm(hSocket);
-					//连接建立状态
-					break;
-				case 2://等待质询结果
-					pDoc->state2_fsm(hSocket);
-					//等待质询结果状态
-					break;
-				case 3:
-					//用户已在线，等待其它指令。
-					pDoc->state3_fsm(hSocket);//调用主状态处理函数
-					break;
-				case 4:
-					//在接收上传文件数据状态，接收数据
-					pDoc->state4_fsm(hSocket);
-					break;
-				case 5:
-					//等待下载数据确认状态
-					pDoc->state5_fsm(hSocket);
-					break;
-				default:
-					break;
-				}
+			case 0://质询出错
+				break;
+			case 1://等待用户名，并发送质询
+				pDoc->state1_fsm(hSocket);
+				//连接建立状态
+				break;
+			case 2://等待质询结果
+				pDoc->state2_fsm(hSocket);
+				//等待质询结果状态
+				break;
+			case 3:
+				//用户已在线，等待其它指令。
+				pDoc->state3_fsm(hSocket);//调用主状态处理函数
+				break;
+			case 4:
+				//在接收上传文件数据状态，接收数据
+				pDoc->state4_fsm(hSocket);
+				break;
+			case 5:
+				//等待下载数据确认状态
+				pDoc->state5_fsm(hSocket);
+				break;
+			default:
+				break;
 			}
+		}
 			break;
 		case FD_CLOSE:
-			closesocket(hSocket);
+		{	
+			closesocket(hSocket);//hSocket可能在线，也可能还未认证
+			pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+			box_UserOL.ResetContent();
+			for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
+			try {
+				delete pDoc->m_linkInfo.SUMap.at(hSocket);
+				pDoc->m_linkInfo.SUMap.erase(hSocket);
+				auto& tmp= pDoc->m_linkInfo.SFMap.at(hSocket);    // vector::at throws an out-of-range
+				delete tmp;
+				pDoc->m_linkInfo.SFMap.erase(hSocket);
+			}
+			catch (const std::out_of_range& oor) {
+				std::cerr << "Out of Range error: " << oor.what() << '\n';
+			}
+			catch (const std::exception& error) {
+				std::cerr << "error: " << error.what() << '\n';
+			}
+		}
 			break;
 		}
 		break;//中断的是case WM_SOCK:

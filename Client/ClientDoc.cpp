@@ -19,6 +19,7 @@
 #endif
 
 
+
 // CClientDoc
 
 IMPLEMENT_DYNCREATE(CClientDoc, CDocument)
@@ -117,47 +118,47 @@ void CClientDoc::socket_state1_fsm(SOCKET s)
 	{
 	case 2://收到质询报文
 		{
-			u_int num_N = recvbuf[3];
+			unsigned char num_N = recvbuf[3];
 			temp = &recvbuf[4];
 
-			u_int password_value = 0;
-			u_int password_len = pView->m_password.GetLength();//只有点击连接时，才会刷新用户名和密码，此时一定可以获取到上次正确的密码
+			std::string password(pView->m_password);
+			//只有点击连接时，才会刷新用户名和密码，此时一定可以获取到上次正确的密码
 			u_short correct_result = 0;
 			u_short correct_password = 0;
 			u_short correct_sum = 0;
-
-			if (num_N <= 20)//整数个数小于20,u_int一定大于0
+			assert(num_N <= 20);
+			for (size_t i = 0; i < num_N; i++)
 			{
-				for (size_t i = 0; i < num_N; i++)
-				{
-					//这两行待修改
-					correct_sum += ntohs(*(u_short*)temp);
-					temp = temp + 2;
-				}
 
-				if ((password_len > 0) && (password_len <= 5))//两字节，最大65535
+				correct_sum += ntohs(*(u_short*)temp);
+				temp = temp + 2;
+			}
+			//处理密码，转换成可以计算的
+			int t_p = 0;
+			try
+			{
+				t_p = std::stoi(password);
+			}
+			catch (const std::invalid_argument&)
+			{
+				for (const auto c : password)
 				{
-					password_value = (u_int)_ttoi(pView->m_password);
-					correct_password = (u_short)(password_value % 65536);
-					correct_result = correct_sum ^ correct_password;
+					t_p += c;
+				}
+			}
+
+			correct_password = (u_short)t_p;
+			correct_result = correct_sum ^ correct_password;
 
 					
-					sendbuf[0] = 3;//填写事件号
-					temp = &sendbuf[1];
-					*(u_short*)temp = htons(5);//packet_len=5
-					temp = &sendbuf[3];
-					*(u_short*)temp = htons(correct_result);//写入赋值，挺复杂的写法
-					send(s, sendbuf, 5, 0);
-					TRACE("respond challenge");
-					pView->client_state = 2;//状态转换，已返回质询结果，等待确认
-				}
-				else
-				{//密码长度不对
-				}
-			}
-			else
-			{//整数个数不对
-			}
+			sendbuf[0] = 3;//填写事件号
+			temp = &sendbuf[1];
+			*(u_short*)temp = htons(5);//packet_len=5
+			temp = &sendbuf[3];
+			*(u_short*)temp = htons(correct_result);//写入赋值，挺复杂的写法
+			send(s, sendbuf, 5, 0);
+			TRACE("respond challenge");
+			pView->client_state = 2;//状态转换，已返回质询结果，等待确认
 		}
 		break;
 	default:

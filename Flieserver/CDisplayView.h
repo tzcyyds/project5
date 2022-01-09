@@ -37,7 +37,7 @@ protected:
 	SOCKADDR_IN clntAdr;
 	int clntAdrLen;
 public:
-	CListBox UserOL;
+	CListBox box_UserOL;
 	CListBox m_accounts;
 	UINT m_port;
 	afx_msg void OnBnClickedListen();

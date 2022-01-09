@@ -13,6 +13,7 @@
 #include "afxwin.h"
 #include <string>
 #include <vector>
+#include <stdexcept>
 //view和doc共用的表达式/宏
 constexpr auto MAX_WSAE_TIMES = 10;// 单次发送或接收过程中所允许出现WSAEWOULDBLOCK的最大次数
 constexpr auto CHUNK_SIZE = 4096;

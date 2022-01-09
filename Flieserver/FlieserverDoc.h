@@ -28,6 +28,11 @@ public:
 	void state4_fsm(SOCKET hSocket);
 	void state5_fsm(SOCKET hSocket);
 
+	UserDoc m_UserInfo;//本地用户信息 string-string,用户名-密码
+	LinkInfo m_linkInfo;//IP地址，端口号,质询结果等，<SOCKET, User>
+//共享区
+	CString shared_path;
+	std::forward_list<std::string> shared_UserOL;
 // 重写
 public:
 	virtual BOOL OnNewDocument();
@@ -44,11 +49,6 @@ public:
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
-
-public:
-	UserDoc m_UserInfo;//本地用户信息 string-string,用户名-密码
-	LinkInfo m_linkInfo;//IP地址，端口号等，<SOCKET, User>
-	std::unordered_map<SOCKET, std::string> m_Comparison;//保存客户端应该返回的质询结果，socket-string，socket-应该返回的质询结果
 
 // 生成的消息映射函数
 protected:

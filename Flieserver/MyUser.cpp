@@ -20,14 +20,20 @@ void UserDoc::writeP()
 
 LinkInfo::~LinkInfo()
 {//为了保证内存安全
-	for (auto &it: SUMap)
+	if (!SUMap.empty())
 	{
-		delete it.second;
+		for (auto& it : SUMap)
+		{
+			delete it.second;
+		}
+		SUMap.clear();
 	}
-	SUMap.clear();
-	for (auto& it : SFMap)
-	{
-		delete it.second;
+	if (!SFMap.empty()) {
+		for (auto& it : SFMap)
+		{
+			delete it.second;
+		}
+		SFMap.clear();
 	}
-	SFMap.clear();
+
 }
