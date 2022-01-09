@@ -34,7 +34,6 @@ public:
 public:
 	std::unordered_map<std::string, std::string> UserDocMap;
 	void writeP();
-	void initDoc();
 
 };
 

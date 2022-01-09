@@ -33,7 +33,7 @@ CFlieserverDoc::CFlieserverDoc() noexcept
 	// TODO: 在此添加一次性构造代码
 	//CFlieserverDoc::BroseAllFiles("..\\m_filepath");
 	SetTitle(TEXT("fileserver"));
-	m_UserInfo.initDoc();//本地用户信息
+	//m_UserInfo.initDoc();//本地用户信息
 	//m_linkInfo.SUMap.clear();//连接-用户名信息
 	//m_linkInfo.SFMap.clear();//s-相关文件
 	m_Comparison.clear();
@@ -253,7 +253,7 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 					send(hSocket, sendbuf, 4, 0);//发送
 					m_linkInfo.SUMap[hSocket]->state = 3;//进入主状态
 					TRACE("user online");
-					pView->UserName.AddString(inet_ntoa(m_linkInfo.SUMap[hSocket]->ip)); // 添加在线用户的IP
+					pView->UserOL.AddString((m_linkInfo.SUMap[hSocket]->username).c_str()); // 添加在线用户的用户名
 					
 					//用户在线之后立即给用户发送一份目录。这里利用recvbuf发送报文
 					memset(recvbuf, '\0', 5);//清空字符数组

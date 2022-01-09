@@ -5,6 +5,8 @@
 
 UserDoc::UserDoc()
 {
+	//UserDocMap.insert(std::pair<std::string, std::string>("test1", "12345"));
+	//UserDocMap.insert(std::pair<std::string, std::string>("test2", "12345"));
 }
 
 UserDoc::~UserDoc()
@@ -15,10 +17,6 @@ void UserDoc::writeP()
 {
 }
 
-void UserDoc::initDoc()
-{
-	UserDocMap.insert(std::pair<std::string, std::string>("test", "12345"));
-}
 
 LinkInfo::~LinkInfo()
 {//为了保证内存安全

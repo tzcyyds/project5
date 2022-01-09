@@ -5,6 +5,7 @@
 #include "Flieserver.h"
 #include "CDisplayView.h"
 #include "FlieserverDoc.h"
+#include <fstream>
 
 #define WM_SOCK WM_USER + 100// 自定义消息，为避免冲突，最好100以上
 // CDispalyView
@@ -14,6 +15,7 @@ IMPLEMENT_DYNCREATE(CDisplayView, CFormView)
 CDisplayView::CDisplayView()
 	: CFormView(IDD_DISPLAYVIEW)
 	, m_port(9190)
+	, m_key(_T(""))
 {
 	hCommSock = 0;
 	memset(&clntAdr, 0, sizeof(clntAdr));
@@ -27,13 +29,16 @@ CDisplayView::~CDisplayView()
 void CDisplayView::DoDataExchange(CDataExchange* pDX)
 {
 	CFormView::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_USEROL, UserName);
+	DDX_Control(pDX, IDC_USEROL, UserOL);
 	DDX_Text(pDX, IDC_PORT, m_port);
+	DDX_Control(pDX, IDC_ACCOUNTS, m_accounts);
+	DDX_Text(pDX, IDC_KEY, m_key);
 }
 
 BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_LISTEN, &CDisplayView::OnBnClickedListen)
 	ON_BN_CLICKED(IDC_STOP, &CDisplayView::OnBnClickedStop)
+	ON_BN_CLICKED(IDC_DECRYPT, &CDisplayView::OnBnClickedDecrypt)
 END_MESSAGE_MAP()
 
 
@@ -184,4 +189,49 @@ void CDisplayView::OnBnClickedListen()
 void CDisplayView::OnBnClickedStop()
 {
 	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void split(const std::string& s, std::vector<std::string>& tokens, char delim = ' ') {
+	tokens.clear();
+	auto string_find_first_not = [s, delim](size_t pos = 0) -> size_t {
+		for (size_t i = pos; i < s.size(); i++) {
+			if (s[i] != delim) return i;
+		}
+		return std::string::npos;
+	};
+	size_t lastPos = string_find_first_not(0);
+	size_t pos = s.find(delim, lastPos);
+	while (lastPos != std::string::npos) {
+		tokens.emplace_back(s.substr(lastPos, pos - lastPos));
+		lastPos = string_find_first_not(pos);
+		pos = s.find(delim, lastPos);
+	}
+}
+void CDisplayView::OnBnClickedDecrypt()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CFlieserverDoc* pDoc = (CFlieserverDoc*)GetDocument();
+	using namespace std;
+	ifstream in(".\\accounts.txt");
+	string accstr;
+	in >> accstr;
+	in.close();
+	vector<string> m_tokens;
+	split(accstr, m_tokens, ';');
+
+	for (auto& it : m_tokens) {
+		string::size_type subpos = 0;
+		string username, password;
+		if ((subpos = it.find('-'))
+			!= string::npos)
+		{
+			username = it.substr(0, subpos);
+			password = it.substr(subpos + 1);
+			pDoc->m_UserInfo.UserDocMap.insert(std::pair<std::string, std::string>(username, password));
+			m_accounts.AddString((username + ':' + password).c_str());
+		}
+		else TRACE("file error");
+	}
+
 }
