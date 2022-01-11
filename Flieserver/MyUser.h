@@ -11,6 +11,7 @@ struct User
 	CString exclusive_path = ""; // 独享目录
 	CString current_path = ""; // 当前用户正在看的目录
 	u_short comparison = 0; //client应该返回的质询结果
+	CString current_path2 = ""; // 当前用户正在看的独享目录
 };
 struct Fileinfo
 {

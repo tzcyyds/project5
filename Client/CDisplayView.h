@@ -33,6 +33,7 @@ public:
 	CString m_user;
 	CString m_password;
 	CListBox FileName;
+	CListBox FileName2;
 	//CIPAddressCtrl ServerIP;
 	DWORD m_ip;
 	// server port
@@ -46,6 +47,7 @@ public:
 	SOCKADDR_IN servAdr;
 
 	CString strdirpath; // 文件路径
+	CString strdirpath2; // 独享文件路径
 
 	// 上传、下载和删除通用
 	CFileException errFile;
@@ -66,9 +68,15 @@ public:
 	afx_msg void OnBnClickedUpload();
 	afx_msg void OnBnClickedDownload();
 	afx_msg void OnBnClickedDelete();
+	afx_msg void OnBnClickedEnterdir2();
+	afx_msg void OnBnClickedGoback2();
+	afx_msg void OnBnClickedUpload2();
+	afx_msg void OnBnClickedDownload2();
+	afx_msg void OnBnClickedDelete2();
 
 
 	void UpdateDir(CString recv);
+	void UpdateDir2(CString recv);
 	void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
 
 };

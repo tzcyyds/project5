@@ -25,6 +25,12 @@
 #define IDC_UPLOAD                      1015
 #define IDC_DOWNLOAD                    1016
 #define IDC_DELETE                      1017
+#define IDC_LIST2                       1018
+#define IDC_ENTERDIR2                   1019
+#define IDC_GOBACK2                     1020
+#define IDC_UPLOAD2                     1021
+#define IDC_DOWNLOAD2                   1022
+#define IDC_DELETE2                     1023
 
 // Next default values for new objects
 // 
