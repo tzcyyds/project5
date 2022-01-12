@@ -211,6 +211,7 @@ void CDisplayView::OnBnClickedDisconnect()
 		closesocket(hCommSock);
 		client_state = 0;
 		FileName.ResetContent();
+		FileName2.ResetContent();
 	}
 	else;
 	return;
@@ -535,7 +536,7 @@ void CDisplayView::OnBnClickedUpload2()
 			u_short namelen = uploadName.GetLength();//此处有可能丢失信息
 			ULONGLONG fileLength = uploadFile.GetLength();//64位
 
-			sendbuf[0] = 15;
+			sendbuf[0] = 32;//独享目录上传请求
 			temp = &sendbuf[3];
 			*(u_short*)temp = htons(namelen);
 			strcpy_s(sendbuf + 5, namelen + 1, uploadName);
@@ -594,7 +595,7 @@ void CDisplayView::OnBnClickedDownload2()
 				u_short nameLength = downloadName.GetLength();//此处有可能丢失信息
 				char sendbuf[MAX_BUF_SIZE] = { 0 };
 				char* temp = sendbuf;
-				*(char*)temp = 11;
+				*(char*)temp = 31;//独享目录下载请求
 				temp = temp + 1;
 				*(u_short*)temp = htons(nameLength + 5);
 				temp = temp + 2;
@@ -626,7 +627,7 @@ void CDisplayView::OnBnClickedDelete2()
 				//deleteName = strdirpath.Left(strdirpath.GetLength() - 1) + deleteName;//拼成正确的文件名
 				//得了，别带路径啦
 				int nameLength = deleteName.GetLength();
-				sendbuf[0] = 19;
+				sendbuf[0] = 33;//独享目录上传请求
 				temp = &sendbuf[1];
 				*(u_short*)temp = htons((nameLength + 3));
 				temp = &sendbuf[3];

@@ -357,14 +357,20 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 		}
 		break;
 	case 11://请求下载
+	case 31://独享目录请求下载
 		{
 			temp = recvbuf + 3;
 			u_short namelen = ntohs(*(u_short*)temp);
 			CString downloadName(&recvbuf[5], namelen);
 			//本地打开文件
-			if (!(m_linkInfo.SFMap[hSocket]->downloadFile.Open(
+			//这里判断逻辑稍复杂，区分了共享和独享两种情况
+			if (!((event == 11 && (m_linkInfo.SFMap[hSocket]->downloadFile.Open(
 				m_linkInfo.SUMap[hSocket]->current_path + downloadName,
 				CFile::modeRead | CFile::typeBinary, &m_linkInfo.SFMap[hSocket]->errFile)))
+				||
+				(event == 31 && (m_linkInfo.SFMap[hSocket]->downloadFile.Open(
+					m_linkInfo.SUMap[hSocket]->current_path2 + downloadName,
+					CFile::modeRead | CFile::typeBinary, &m_linkInfo.SFMap[hSocket]->errFile)))))
 			{
 				char errOpenFile[256];
 				m_linkInfo.SFMap[hSocket]->errFile.GetErrorMessage(errOpenFile, 255);
@@ -421,6 +427,7 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 		}
 		break;
 	case 15://请求上传
+	case 32://独享目录请求上传
 		{	
 			temp = recvbuf + 3;
 			u_short namelen = ntohs(*(u_short*)temp);
@@ -429,10 +436,16 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 			u_long fileLength = ntohl(*(u_long*)temp);
 			m_linkInfo.SFMap[hSocket]->leftToRecv = fileLength;//会自动转换类型
 			//本地打开，接收上传文件
-			if (!(m_linkInfo.SFMap[hSocket]->uploadFile.Open(
+			//这里判断逻辑稍复杂，区分了共享和独享两种情况
+			if (!((event == 15 && (m_linkInfo.SFMap[hSocket]->uploadFile.Open(
 				m_linkInfo.SUMap[hSocket]->current_path + uploadName,
 				CFile::modeCreate | CFile::modeWrite | CFile::typeBinary, 
 				&m_linkInfo.SFMap[hSocket]->errFile)))
+				||
+				(event == 32 && (m_linkInfo.SFMap[hSocket]->uploadFile.Open(
+					m_linkInfo.SUMap[hSocket]->current_path2 + uploadName,
+					CFile::modeCreate | CFile::modeWrite | CFile::typeBinary,
+					&m_linkInfo.SFMap[hSocket]->errFile)))))
 			{
 				char errOpenFile[256];
 				m_linkInfo.SFMap[hSocket]->errFile.GetErrorMessage(errOpenFile, 255);
@@ -466,9 +479,14 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 		}
 		break;
 	case 19://请求删除
+	case 33://独享目录请求删除
 		{
 			CString m_filename(&recvbuf[3], packet_len - 3);//不带路径的文件名
-			m_filename = m_linkInfo.SUMap[hSocket]->current_path + m_filename;//带路径的文件名
+			if (event == 19) 
+				m_filename = m_linkInfo.SUMap[hSocket]->current_path + m_filename;//带路径的文件名
+			else 
+				m_filename = m_linkInfo.SUMap[hSocket]->current_path2 + m_filename;
+
 			if (DeleteFile(m_filename))//WIN32 API
 			{//成功
 				sendbuf[0] = 20;
@@ -478,10 +496,18 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 				sendbuf[4] = 0;
 				send(hSocket, sendbuf, 5, 0);
 				//删除成功后令client立即更新目录
-				recvbuf[0] = 6;
+				CString m_send;
+				if (event == 19) {
+					recvbuf[0] = 6;
+					m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path + '*');
+				} 
+				else {
+					recvbuf[0] = 30;
+					m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path2 + '*');
+				}
 				temp = &recvbuf[1];
 
-				CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path + '*');
+				
 				strLen = m_send.GetLength();//重新使用strLen
 				assert(strLen > 0);//若为空目录，则要特殊处理
 				*(u_short*)temp = htons(strLen + 3);
@@ -574,7 +600,18 @@ void CFlieserverDoc::state4_fsm(SOCKET hSocket)
 				//使用strcpy,长度全都需要+1！
 				strcpy_s(&recvbuf[3], strLen + 1, m_send);
 				send(iter->first, recvbuf, strLen + 3, 0);
-			}			
+			}
+
+			// 上传完成，向该client发送一次独享目录
+			recvbuf[0] = 30;
+			temp = &recvbuf[1];
+			CString m_send = PathtoList(m_linkInfo.SUMap[hSocket]->current_path2 + '*');
+			strLen = m_send.GetLength();//重新使用strLen
+			assert(strLen > 0);//若为空目录，则要特殊处理
+			*(u_short*)temp = htons(strLen + 3);
+			//使用strcpy,长度全都需要+1！
+			strcpy_s(&recvbuf[3], strLen + 1, m_send);
+			send(hSocket, recvbuf, strLen + 3, 0);
 		}
 		else {
 			TRACE("leftToSend error!!!/n");
