@@ -11,7 +11,7 @@
 #endif
 
 #include "ClientDoc.h"
-#include "client_function.h"
+#include "client_func.h"
 
 
 #ifdef _DEBUG
@@ -247,6 +247,13 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			else{
 			}
 		}
+	case 21:
+	{
+		//用户列表初始化
+		CString user_list(&recvbuf[3], packet_len - 3);
+		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+	}
 		break;
 	default:
 		break;
@@ -308,6 +315,14 @@ void CClientDoc::socket_state4_fsm(SOCKET s)
 			}
 		}
 		break;
+	case 21:
+	{
+		//用户列表初始化
+		CString user_list(&recvbuf[3], packet_len - 3);
+		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+	}
+	break;
 	default:
 		break;
 	}
@@ -378,6 +393,14 @@ void CClientDoc::socket_state5_fsm(SOCKET s)
 		break;
 	case 9://收到重传确认
 		break;
+	case 21:
+	{
+		//用户列表初始化
+		CString user_list(&recvbuf[3], packet_len - 3);
+		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+	}
+	break;
 	default:
 		break;
 	}
@@ -421,6 +444,14 @@ void CClientDoc::socket_state6_fsm(SOCKET s)
 			}
 		}
 		break;
+	case 21:
+	{
+		//用户列表初始化
+		CString user_list(&recvbuf[3], packet_len - 3);
+		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+	}
+	break;
 	default:
 		break;
 	}
@@ -489,6 +520,14 @@ void CClientDoc::socket_state7_fsm(SOCKET s)
 			}
 		}
 		break;
+	case 21:
+	{
+		//用户列表初始化
+		CString user_list(&recvbuf[3], packet_len - 3);
+		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+	}
+	break;
 	default:
 		break;
 	}

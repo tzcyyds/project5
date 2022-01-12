@@ -203,7 +203,10 @@ bool m_Delete(CDisplayView* pView, bool is_share) {
 			//deleteName = strdirpath.Left(strdirpath.GetLength() - 1) + deleteName;//拼成正确的文件名
 			//不带路径
 			int nameLength = deleteName.GetLength();
-			sendbuf[0] = 33;//独享目录上传请求
+
+			if (is_share) sendbuf[0] = 19;//共享目录删除请求
+			else sendbuf[0] = 33;//独享目录删除请求
+
 			temp = &sendbuf[1];
 			*(u_short*)temp = htons((nameLength + 3));
 			temp = &sendbuf[3];

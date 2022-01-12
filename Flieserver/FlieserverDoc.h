@@ -18,6 +18,7 @@ public:
 	CDisplayView* pView;
 // 操作
 public:
+	BOOL send_dir(SOCKET hSocket, bool is_share);
 	CString PathtoList(CString path);
 	BOOL UploadOnce(SOCKET hSocket,const char* buf, u_int length);
 	BOOL RecvOnce(SOCKET hSocket,char* buf, u_int length);
@@ -29,10 +30,10 @@ public:
 	void state5_fsm(SOCKET hSocket);
 
 	UserDoc m_UserInfo;//本地用户信息 string-string,用户名-密码
-	LinkInfo m_linkInfo;//IP地址，端口号,质询结果等，<SOCKET, User>
-//共享区
+	LinkInfo m_linkInfo;//SUMap:<SOCKET, User>,IP地址，端口号,质询结果,用户名等等，重要的数据结构！
 	CString shared_path;
-	std::forward_list<std::string> shared_UserOL;
+//共享区
+	//std::forward_list<std::string> UserOL_list;
 // 重写
 public:
 	virtual BOOL OnNewDocument();

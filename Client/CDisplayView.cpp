@@ -5,7 +5,7 @@
 #include "Client.h"
 #include "CDisplayView.h"
 #include "ClientDoc.h"
-#include "client_function.h"
+#include "client_func.h"
 
 // CDispalyView
 
@@ -39,6 +39,7 @@ void CDisplayView::DoDataExchange(CDataExchange* pDX)
 	DDX_IPAddress(pDX, IDC_IPADDRESS1, m_ip);
 	DDX_Text(pDX, IDC_EDIT4, m_SPort);
 	DDX_Text(pDX, IDC_EDIT5, m_LPort);
+	DDX_Control(pDX, IDC_USERS, UserList);
 }
 
 BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
@@ -119,6 +120,7 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 		case FD_CLOSE:
 			FileName.ResetContent();
 			FileName2.ResetContent();
+			UserList.ResetContent();
 			WSAAsyncSelect(hCommSock, m_hWnd, 0, 0);//取消注册
 			closesocket(hSocket);
 			client_state = 0;
@@ -157,6 +159,7 @@ void CDisplayView::OnBnClickedDisconnect()
 		client_state = 0;
 		FileName.ResetContent();
 		FileName2.ResetContent();
+		UserList.ResetContent();
 	}
 	else;
 	return;

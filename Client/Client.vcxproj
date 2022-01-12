@@ -186,7 +186,7 @@
     <ClInclude Include="CDisplayView.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientDoc.h" />
-    <ClInclude Include="client_function.h" />
+    <ClInclude Include="client_func.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="pch.h" />
@@ -197,7 +197,7 @@
     <ClCompile Include="CDisplayView.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientDoc.cpp" />
-    <ClCompile Include="client_function.cpp" />
+    <ClCompile Include="client_func.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

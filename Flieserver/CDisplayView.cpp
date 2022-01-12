@@ -5,9 +5,8 @@
 #include "Flieserver.h"
 #include "CDisplayView.h"
 #include "FlieserverDoc.h"
-#include <fstream>
+#include "sever_func.h"
 
-#define WM_SOCK WM_USER + 100// 自定义消息，为避免冲突，最好100以上
 // CDispalyView
 
 IMPLEMENT_DYNCREATE(CDisplayView, CFormView)
@@ -156,13 +155,16 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case 3:
 			{
-				pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				//pDoc->UserOL_list.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				pDoc->m_linkInfo.USMap.erase(
+					pDoc->m_linkInfo.SUMap[hSocket]->username);//从用户列表中删除
 				box_UserOL.ResetContent();//更新box
-				for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
+				for (const auto& it : pDoc->m_linkInfo.USMap) box_UserOL.AddString(it.first.c_str());
 				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SUMap.erase(hSocket);
 				delete pDoc->m_linkInfo.SFMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SFMap.erase(hSocket);
+				send_userlist(pDoc);
 			}
 				break;
 			case 4://接收上传文件数据状态
@@ -248,22 +250,6 @@ void CDisplayView::OnBnClickedStop()
 }
 
 
-void split(const std::string& s, std::vector<std::string>& tokens, char delim = ' ') {
-	tokens.clear();
-	auto string_find_first_not = [s, delim](size_t pos = 0) -> size_t {
-		for (size_t i = pos; i < s.size(); i++) {
-			if (s[i] != delim) return i;
-		}
-		return std::string::npos;
-	};
-	size_t lastPos = string_find_first_not(0);
-	size_t pos = s.find(delim, lastPos);
-	while (lastPos != std::string::npos) {
-		tokens.emplace_back(s.substr(lastPos, pos - lastPos));
-		lastPos = string_find_first_not(pos);
-		pos = s.find(delim, lastPos);
-	}
-}
 void CDisplayView::OnBnClickedDecrypt()
 {
 	// TODO: 在此添加控件通知处理程序代码

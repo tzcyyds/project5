@@ -41,6 +41,11 @@ public:
 	BOOL UploadOnce(const char* buf, u_int length);
 	BOOL RecvOnce(char* buf, u_int length);
 
+	//CString shared_list;
+	//CString exclusive_list;
+	//CString user_list;
+	//std::forward_list<std::string> user_list;
+
 protected:
 	CDisplayView* pView;
 #ifdef _DEBUG

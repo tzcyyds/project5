@@ -12,11 +12,13 @@
 #include <iostream>
 #include <propkey.h>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <forward_list>
-
+#include <fstream>
 //view和doc共用的表达式/宏
 constexpr auto MAX_WSAE_TIMES = 10;// 单次发送或接收过程中所允许出现WSAEWOULDBLOCK的最大次数
 constexpr auto CHUNK_SIZE = 4096;
 constexpr auto MAX_BUF_SIZE = 256;
+#define WM_SOCK WM_USER + 100// 自定义消息，为避免冲突，最好100以上
 #endif //PCH_H
