@@ -31,9 +31,9 @@ public:
 
 	UserDoc m_UserInfo;//本地用户信息 string-string,用户名-密码
 	LinkInfo m_linkInfo;//IP地址，端口号,质询结果等，<SOCKET, User>
-//共享区
 	CString shared_path;
-	std::forward_list<std::string> shared_UserOL;
+//共享区
+	std::forward_list<std::string> UserOL_list;
 // 重写
 public:
 	virtual BOOL OnNewDocument();

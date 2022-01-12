@@ -11,6 +11,7 @@
 #endif
 
 #include "FlieserverDoc.h"
+#include "sever_func.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -275,19 +276,21 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 				Fileinfo* m_file = new Fileinfo;//用户在线后立即为用户建立文件相关信息档案
 				m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
 				pView->box_UserOL.AddString((m_linkInfo.SUMap[hSocket]->username).c_str()); // 添加在线用户的用户名
-				shared_UserOL.push_front(m_linkInfo.SUMap[hSocket]->username);
+				UserOL_list.push_front(m_linkInfo.SUMap[hSocket]->username);
 
-				//设置每个在线用户的初始current目录，防止直接上传后更新目录出错
-				m_linkInfo.SUMap[hSocket]->current_path = shared_path;
+				send_userlist(this);//给包括它在内的所有用户发送所有用户列表信息
 
-				//设置每个在线用户的独享目录
-				m_linkInfo.SUMap[hSocket]->exclusive_path =
-					("..\\client_exclusive_path\\"
-						+ m_linkInfo.SUMap[hSocket]->username + "\\").c_str();
-				m_linkInfo.SUMap[hSocket]->current_path2 = m_linkInfo.SUMap[hSocket]->exclusive_path;
-
-				send_dir(hSocket, true);
-				send_dir(hSocket, false);
+				{
+					//设置此用户的初始current目录，防止直接上传后更新目录出错
+					m_linkInfo.SUMap[hSocket]->current_path = shared_path;
+					//设置此用户的独享目录
+					m_linkInfo.SUMap[hSocket]->exclusive_path =
+						("..\\client_exclusive_path\\"
+							+ m_linkInfo.SUMap[hSocket]->username + "\\").c_str();
+					m_linkInfo.SUMap[hSocket]->current_path2 = m_linkInfo.SUMap[hSocket]->exclusive_path;
+					send_dir(hSocket, true);
+					send_dir(hSocket, false);
+				}
 			}
 			else
 			{

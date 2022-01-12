@@ -34,6 +34,7 @@ public:
 	CString m_password;
 	CListBox FileName;
 	CListBox FileName2;
+	CListBox UserList;
 	//CIPAddressCtrl ServerIP;
 	DWORD m_ip;
 	// server port

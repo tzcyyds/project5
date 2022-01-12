@@ -155,13 +155,14 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case 3:
 			{
-				pDoc->shared_UserOL.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				pDoc->UserOL_list.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);//不一定删除成功
 				box_UserOL.ResetContent();//更新box
-				for (const auto& it : pDoc->shared_UserOL) box_UserOL.AddString(it.c_str());
+				for (const auto& it : pDoc->UserOL_list) box_UserOL.AddString(it.c_str());
 				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SUMap.erase(hSocket);
 				delete pDoc->m_linkInfo.SFMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SFMap.erase(hSocket);
+				send_userlist(pDoc);
 			}
 				break;
 			case 4://接收上传文件数据状态
