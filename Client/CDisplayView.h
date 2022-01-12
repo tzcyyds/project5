@@ -74,11 +74,6 @@ public:
 	afx_msg void OnBnClickedDownload2();
 	afx_msg void OnBnClickedDelete2();
 
-
-	void UpdateDir(CString recv);
-	void UpdateDir2(CString recv);
-	void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c);
-
 };
 
 
