@@ -119,6 +119,7 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case FD_CLOSE:
 			FileName.ResetContent();
+			FileName2.ResetContent();
 			WSAAsyncSelect(hCommSock, m_hWnd, 0, 0);//取消注册
 			closesocket(hSocket);
 			client_state = 0;

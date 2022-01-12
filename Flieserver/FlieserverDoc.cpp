@@ -581,7 +581,8 @@ void CFlieserverDoc::state4_fsm(SOCKET hSocket)
 		if (m_linkInfo.SFMap[hSocket]->leftToRecv > 0) {
 			m_linkInfo.SUMap[hSocket]->state = 4;
 		}
-		else if (m_linkInfo.SFMap[hSocket]->leftToRecv == 0) {
+		else if (m_linkInfo.SFMap[hSocket]->leftToRecv == 0) 
+		{
 			//记得要close文件句柄
 			m_linkInfo.SFMap[hSocket]->uploadFile.Close();
 			//好像应该重新初始化这个文件，不然会出问题的
@@ -592,7 +593,8 @@ void CFlieserverDoc::state4_fsm(SOCKET hSocket)
 			recvbuf[0] = 6;
 			temp = &recvbuf[1];
 			//遍历在线用户的hSocket
-			for (auto iter = m_linkInfo.SFMap.begin(); iter != m_linkInfo.SFMap.end(); iter++) {
+			for (auto iter = m_linkInfo.SFMap.begin(); iter != m_linkInfo.SFMap.end(); iter++) 
+			{
 				CString m_send = PathtoList(m_linkInfo.SUMap[iter->first]->current_path + '*');
 				strLen = m_send.GetLength();//重新使用strLen
 				assert(strLen > 0);//若为空目录，则要特殊处理
@@ -613,7 +615,8 @@ void CFlieserverDoc::state4_fsm(SOCKET hSocket)
 			strcpy_s(&recvbuf[3], strLen + 1, m_send);
 			send(hSocket, recvbuf, strLen + 3, 0);
 		}
-		else {
+		else 
+		{
 			TRACE("leftToSend error!!!/n");
 		}
 	}
