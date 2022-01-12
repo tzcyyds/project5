@@ -155,9 +155,11 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case 3:
 			{
-				pDoc->UserOL_list.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);//不一定删除成功
+				//pDoc->UserOL_list.remove(pDoc->m_linkInfo.SUMap[hSocket]->username);
+				pDoc->m_linkInfo.USMap.erase(
+					pDoc->m_linkInfo.SUMap[hSocket]->username);//从用户列表中删除
 				box_UserOL.ResetContent();//更新box
-				for (const auto& it : pDoc->UserOL_list) box_UserOL.AddString(it.c_str());
+				for (const auto& it : pDoc->m_linkInfo.USMap) box_UserOL.AddString(it.first.c_str());
 				delete pDoc->m_linkInfo.SUMap.at(hSocket);//一定成功
 				pDoc->m_linkInfo.SUMap.erase(hSocket);
 				delete pDoc->m_linkInfo.SFMap.at(hSocket);//一定成功

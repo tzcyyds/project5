@@ -45,6 +45,7 @@ public:
 	void myclear();
 	std::unordered_map<SOCKET, User*> SUMap;
 	std::unordered_map<SOCKET, Fileinfo*> SFMap;
+	std::unordered_map<std::string, SOCKET> USMap;
 };
 
 

@@ -30,10 +30,10 @@ public:
 	void state5_fsm(SOCKET hSocket);
 
 	UserDoc m_UserInfo;//本地用户信息 string-string,用户名-密码
-	LinkInfo m_linkInfo;//IP地址，端口号,质询结果等，<SOCKET, User>
+	LinkInfo m_linkInfo;//SUMap:<SOCKET, User>,IP地址，端口号,质询结果,用户名等等，重要的数据结构！
 	CString shared_path;
 //共享区
-	std::forward_list<std::string> UserOL_list;
+	//std::forward_list<std::string> UserOL_list;
 // 重写
 public:
 	virtual BOOL OnNewDocument();

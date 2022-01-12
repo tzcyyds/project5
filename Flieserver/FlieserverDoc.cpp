@@ -275,9 +275,10 @@ void CFlieserverDoc::state2_fsm(SOCKET hSocket)
 				m_linkInfo.SUMap[hSocket]->state = 3;//进入主状态
 				Fileinfo* m_file = new Fileinfo;//用户在线后立即为用户建立文件相关信息档案
 				m_linkInfo.SFMap.insert(std::pair<SOCKET, Fileinfo*>(hSocket, m_file));
+				//UserOL_list.push_front(m_linkInfo.SUMap[hSocket]->username);
+				m_linkInfo.USMap.insert(
+					std::pair<std::string, SOCKET>(m_linkInfo.SUMap[hSocket]->username, hSocket));
 				pView->box_UserOL.AddString((m_linkInfo.SUMap[hSocket]->username).c_str()); // 添加在线用户的用户名
-				UserOL_list.push_front(m_linkInfo.SUMap[hSocket]->username);
-
 				send_userlist(this);//给包括它在内的所有用户发送所有用户列表信息
 
 				{

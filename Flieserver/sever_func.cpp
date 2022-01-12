@@ -22,12 +22,12 @@ void send_userlist(CFlieserverDoc* pDoc) {
 	char sendbuf[MAX_BUF_SIZE] = { 0 };
 	sendbuf[0] = 21;
 	std::string tempstr;
-	for (auto& it : pDoc->UserOL_list) tempstr = tempstr + it + '|';
+	for (auto& it : pDoc->m_linkInfo.USMap) tempstr = tempstr + it.first + '|';
 	auto strLen = tempstr.length();
 	char* temp = &sendbuf[1];
 	*(u_short*)temp = htons((u_short)(strLen + 3));//应该不会溢出
 	strcpy_s(&sendbuf[3], strLen + 1, tempstr.c_str());
-	for (auto& it : pDoc->m_linkInfo.SFMap)
-		send(it.first, sendbuf, strLen + 3, 0);//发给除它之外的所有在线用户（不在主状态也可以）
+	for (auto& it : pDoc->m_linkInfo.USMap)
+		send(it.second, sendbuf, strLen + 3, 0);//发给除它之外的所有在线用户（不在主状态也可以）
 
 }
