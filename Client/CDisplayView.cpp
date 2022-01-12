@@ -5,7 +5,7 @@
 #include "Client.h"
 #include "CDisplayView.h"
 #include "ClientDoc.h"
-#include "client_function.h"
+#include "client_func.h"
 
 // CDispalyView
 

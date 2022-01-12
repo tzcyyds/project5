@@ -11,7 +11,7 @@
 #endif
 
 #include "ClientDoc.h"
-#include "client_function.h"
+#include "client_func.h"
 
 
 #ifdef _DEBUG

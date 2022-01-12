@@ -18,6 +18,7 @@ public:
 	CDisplayView* pView;
 // 操作
 public:
+	BOOL send_dir(SOCKET hSocket, bool is_share);
 	CString PathtoList(CString path);
 	BOOL UploadOnce(SOCKET hSocket,const char* buf, u_int length);
 	BOOL RecvOnce(SOCKET hSocket,char* buf, u_int length);

@@ -42,6 +42,9 @@
     <ClInclude Include="MyUser.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="sever_func.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Flieserver.cpp">
@@ -60,6 +63,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MyUser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sever_func.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
