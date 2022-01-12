@@ -39,6 +39,9 @@
     <ClInclude Include="CDisplayView.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="client_function.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -54,6 +57,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CDisplayView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="client_function.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
