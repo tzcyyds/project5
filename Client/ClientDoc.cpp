@@ -227,9 +227,16 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 	{
 	case 6://接收返回目录
 		{
-			//std::string file_list(&recvbuf[3], packet_len - 3);
+			//std::string file_list(&recvbuf[3], packet_len - 3);			
 			CString file_list(&recvbuf[3], packet_len - 3);
 			pView->UpdateDir(file_list);
+		}
+		break;
+	case 30://接收返回独享目录
+		{
+			//std::string file_list(&recvbuf[3], packet_len - 3);			
+			CString file_list(&recvbuf[3], packet_len - 3);
+			pView->UpdateDir2(file_list);
 		}
 		break;
 	case 20://删除结果

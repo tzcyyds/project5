@@ -35,7 +35,8 @@ void CDisplayView::DoDataExchange(CDataExchange* pDX)
 	CFormView::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_EDIT2, m_user);
 	DDX_Text(pDX, IDC_EDIT3, m_password);
-	DDX_Control(pDX, IDC_LIST1, FileName);
+	DDX_Control(pDX, IDC_LIST1, FileName2);
+	DDX_Control(pDX, IDC_LIST2, FileName);
 	DDX_IPAddress(pDX, IDC_IPADDRESS1, m_ip);
 	DDX_Text(pDX, IDC_EDIT4, m_SPort);
 	DDX_Text(pDX, IDC_EDIT5, m_LPort);
@@ -49,6 +50,11 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_UPLOAD, &CDisplayView::OnBnClickedUpload)
 	ON_BN_CLICKED(IDC_DOWNLOAD, &CDisplayView::OnBnClickedDownload)
 	ON_BN_CLICKED(IDC_DELETE, &CDisplayView::OnBnClickedDelete)
+	ON_BN_CLICKED(IDC_ENTERDIR2, &CDisplayView::OnBnClickedEnterdir2)
+	ON_BN_CLICKED(IDC_GOBACK2, &CDisplayView::OnBnClickedGoback2)
+	ON_BN_CLICKED(IDC_UPLOAD2, &CDisplayView::OnBnClickedUpload2)
+	ON_BN_CLICKED(IDC_DOWNLOAD2, &CDisplayView::OnBnClickedDownload2)
+	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
 END_MESSAGE_MAP()
 
 
@@ -205,6 +211,7 @@ void CDisplayView::OnBnClickedDisconnect()
 		closesocket(hCommSock);
 		client_state = 0;
 		FileName.ResetContent();
+		FileName2.ResetContent();
 	}
 	else;
 	return;
@@ -223,7 +230,7 @@ void CDisplayView::OnBnClickedEnterdir()
 			char sendbuf[MAX_BUF_SIZE] = { 0 };
 			char* temp = nullptr;
 			strdirpath = selFile + "\\*";// 本地保存当前的文件夹路径，在返回上一级文件夹时会使用到
-			int strLen = strdirpath.GetLength();
+			int strLen = strdirpath.GetLength();			
 			sendbuf[0] = 5;
 			temp = &sendbuf[1];
 			*(u_short*)temp = htons(strLen + 3);
@@ -434,4 +441,213 @@ void CDisplayView::SplitString(const std::string& s, std::vector<std::string>& v
 	}
 	if (pos1 != s.length())
 		v.push_back(s.substr(pos1));
+}
+
+//以下为独享目录相关函数，因为需要区分按钮及其对应的文件名列表框，这里决定复制一遍共享目录相关函数
+void CDisplayView::OnBnClickedEnterdir2()
+{
+	if (client_state == 3) {
+		CString selFile;
+
+		FileName2.GetText(FileName2.GetCurSel(), selFile); //获取用户选择的目录名
+
+		if (selFile.Find('.') == -1) // 判断是否为文件夹，原理：文件名有'.'
+		{
+			char sendbuf[MAX_BUF_SIZE] = { 0 };
+			char* temp = nullptr;
+			strdirpath2 = selFile + "\\*";// 本地保存当前的文件夹路径，在返回上一级文件夹时会使用到
+			int strLen = strdirpath2.GetLength();
+			sendbuf[0] = 5;
+			temp = &sendbuf[1];
+			*(u_short*)temp = htons(strLen + 3);
+			//temp = m_send.GetBuffer();
+			//使用strcpy,长度全都需要+1！
+			strcpy_s(&sendbuf[3], strLen + 1, strdirpath2);
+			//m_send.ReleaseBuffer();
+			//此处可能不需要那么“安全”的发送方式
+			send(hCommSock, sendbuf, strLen + 3, 0);
+		}
+	}
+	else;
+	return;
+}
+
+
+void CDisplayView::OnBnClickedGoback2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (client_state == 3) {
+		if (strdirpath2.GetLength() != 0) // 判断不是初始化时的目录
+		{
+			char sendbuf[MAX_BUF_SIZE] = { 0 };
+			char* temp = nullptr;
+			int pos;
+			//用字符串截取的方法获得上一级目录
+			pos = strdirpath2.ReverseFind('\\');
+			strdirpath2 = strdirpath2.Left(pos);
+			pos = strdirpath2.ReverseFind('\\');
+			strdirpath2 = strdirpath2.Left(pos);
+			strdirpath2 = strdirpath2 + "\\*";
+			int strLen = strdirpath2.GetLength();
+
+			sendbuf[0] = 5;
+			temp = &sendbuf[1];
+			*(u_short*)temp = htons(strLen + 3);
+			//temp = strdirpath.GetBuffer();
+			strcpy_s(&sendbuf[3], strLen + 1, strdirpath2);
+			//strdirpath.ReleaseBuffer();
+			//此处可能不需要那么“安全”的发送方式
+			send(hCommSock, sendbuf, strLen + 3, 0);
+		}
+	}
+	else;
+	return;
+}
+
+
+void CDisplayView::OnBnClickedUpload2()
+{
+	if (client_state == 3) {
+		char szFilters[] = "所有文件 (*.*)|*.*||";
+		CFileDialog fileDlg(TRUE, NULL, NULL,
+			OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
+
+		char desktop[MAX_PATH] = { 0 };
+		SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
+		fileDlg.m_ofn.lpstrInitialDir = desktop;//把默认路径设置为桌面
+
+		if (fileDlg.DoModal() == IDOK)//弹出“打开”对话框
+		{
+			CString fileAbsPath = fileDlg.GetPathName();
+			CString uploadName = fileDlg.GetFileName();
+			if (!(uploadFile.Open(fileAbsPath.GetString(),
+				CFile::modeRead | CFile::typeBinary, &errFile)))
+			{
+				char errOpenFile[256];
+				errFile.GetErrorMessage(errOpenFile, 255);
+				TRACE("\nError occurred while opening file:\n"
+					"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
+					errFile.m_strFileName, errOpenFile, errFile.m_cause, errFile.m_lOsError);
+				ASSERT(FALSE);
+			}
+
+			char sendbuf[MAX_BUF_SIZE] = { 0 };
+			char* temp = sendbuf;
+			u_short namelen = uploadName.GetLength();//此处有可能丢失信息
+			ULONGLONG fileLength = uploadFile.GetLength();//64位
+
+			sendbuf[0] = 32;//独享目录上传请求
+			temp = &sendbuf[3];
+			*(u_short*)temp = htons(namelen);
+			strcpy_s(sendbuf + 5, namelen + 1, uploadName);
+			temp = &sendbuf[namelen + 5];
+			*(u_long*)temp = htonl((u_long)fileLength);//32位，可能会丢失数据
+			temp = &sendbuf[1];
+			*(u_short*)temp = htons((u_short)(namelen + 9));
+
+			leftToSend = fileLength;
+			send(hCommSock, sendbuf, namelen + 9, 0);
+
+			client_state = 4;//变为等待上传确认状态
+		}
+	}
+	else;
+	return;
+}
+
+
+void CDisplayView::OnBnClickedDownload2()
+{
+	if (client_state == 3) {
+		CString downloadName;
+		FileName2.GetText(FileName2.GetCurSel(), downloadName); //获得想要下载资源名
+		if (!downloadName.IsEmpty())
+		{
+			//弹出另存为对话框
+			CString fileExt = downloadName.Right(downloadName.GetLength() - downloadName.ReverseFind('.'));
+			char szFilters[32] = { 0 };
+			sprintf_s(szFilters, "(*%s)|*%s||", fileExt.GetString(), fileExt.GetString());
+			CFileDialog fileDlg(FALSE, NULL, downloadName,
+				OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
+
+			char desktop[MAX_PATH] = { 0 };
+			SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
+			fileDlg.m_ofn.lpstrInitialDir = desktop;//把默认路径设置为桌面
+
+			if (fileDlg.DoModal() == IDOK)
+			{
+				CString fileAbsPath = fileDlg.GetPathName();
+				if (fileDlg.GetFileExt() == "")
+				{
+					fileAbsPath += fileExt;
+				}
+				if (!(downloadFile.Open(fileAbsPath.GetString(),
+					CFile::modeCreate | CFile::modeWrite | CFile::typeBinary, &errFile)))
+				{
+					char errOpenFile[256];
+					errFile.GetErrorMessage(errOpenFile, 255);
+					TRACE("\nError occurred while opening file:\n"
+						"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
+						errFile.m_strFileName, errOpenFile, errFile.m_cause, errFile.m_lOsError);
+					ASSERT(FALSE);
+				}
+
+				u_short nameLength = downloadName.GetLength();//此处有可能丢失信息
+				char sendbuf[MAX_BUF_SIZE] = { 0 };
+				char* temp = sendbuf;
+				*(char*)temp = 31;//独享目录下载请求
+				temp = temp + 1;
+				*(u_short*)temp = htons(nameLength + 5);
+				temp = temp + 2;
+				*(u_short*)temp = htons(nameLength);
+				strcpy_s(sendbuf + 5, nameLength + 1, downloadName);//downloadName不应该包含路径
+				send(hCommSock, sendbuf, nameLength + 5, 0);
+
+				client_state = 6;//变为等待下载确认状态
+			}
+		}
+	}
+	else;
+	return;
+}
+
+
+void CDisplayView::OnBnClickedDelete2()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (client_state == 3) {
+		CString deleteName;
+		char sendbuf[MAX_BUF_SIZE] = { 0 };
+		char* temp = sendbuf;
+		FileName2.GetText(FileName2.GetCurSel(), deleteName); // 获取用户要删除的文件名
+		if (!deleteName.IsEmpty())
+		{
+			if (AfxMessageBox((CString)"确定要删除这个文件？", 4 + 48) == IDYES)
+			{
+				//deleteName = strdirpath.Left(strdirpath.GetLength() - 1) + deleteName;//拼成正确的文件名
+				//得了，别带路径啦
+				int nameLength = deleteName.GetLength();
+				sendbuf[0] = 33;//独享目录上传请求
+				temp = &sendbuf[1];
+				*(u_short*)temp = htons((nameLength + 3));
+				temp = &sendbuf[3];
+				strcpy_s(temp, nameLength + 1, deleteName);
+				send(hCommSock, sendbuf, nameLength + 3, 0);
+			}
+		}
+	}
+	else;
+	return;
+}
+
+void CDisplayView::UpdateDir2(CString recv)  // 更新列表显示的文件目录
+{
+	FileName2.ResetContent();
+
+	std::vector<std::string> v;
+	std::string strStr = recv.GetBuffer(0);
+	SplitString(strStr, v, "|"); //可按多个字符来分隔;
+
+	for (auto i = 0; i != v.size(); ++i)
+		FileName2.AddString(v[i].c_str());
 }
