@@ -19,6 +19,7 @@
 #define IDC_TREE1                       1008
 #define IDC_BUTTON3                     1009
 #define IDC_CHAT                        1009
+#define IDC_SENDMSG                     1009
 #define IDC_LIST1                       1012
 #define IDC_ENTERDIR                    1013
 #define IDC_GOBACK                      1014
@@ -31,8 +32,11 @@
 #define IDC_UPLOAD2                     1021
 #define IDC_DOWNLOAD2                   1022
 #define IDC_DELETE2                     1023
-#define IDC_LIST3                       1024
 #define IDC_USERS                       1025
+#define IDC_MSGEDIT                     1027
+#define IDC_LIST3                       1028
+#define IDC_MSGLIST                     1028
+#define IDC_SENDFILE                    1029
 
 // Next default values for new objects
 // 
@@ -40,7 +44,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        312
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1026
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           310
 #endif
 #endif

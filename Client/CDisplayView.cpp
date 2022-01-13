@@ -19,6 +19,7 @@ CDisplayView::CDisplayView()
 	, m_ip(0x7f000001)
 	, m_SPort(9190)
 	, m_LPort(9191)
+	, Msg_edit(_T(""))
 {
 	hCommSock = 0;
 	memset(&servAdr, 0, sizeof(servAdr));
@@ -40,6 +41,9 @@ void CDisplayView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT4, m_SPort);
 	DDX_Text(pDX, IDC_EDIT5, m_LPort);
 	DDX_Control(pDX, IDC_USERS, UserList);
+	DDX_Control(pDX, IDC_MSGLIST, Msg_list);
+	//  DDX_Control(pDX, IDC_MSGEDIT, Msg_edit);
+	DDX_Text(pDX, IDC_MSGEDIT, Msg_edit);
 }
 
 BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
@@ -55,6 +59,8 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_UPLOAD2, &CDisplayView::OnBnClickedUpload2)
 	ON_BN_CLICKED(IDC_DOWNLOAD2, &CDisplayView::OnBnClickedDownload2)
 	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
+	ON_BN_CLICKED(IDC_SENDMSG, &CDisplayView::OnBnClickedSendmsg)
+	ON_BN_CLICKED(IDC_SENDFILE, &CDisplayView::OnBnClickedSendfile)
 END_MESSAGE_MAP()
 
 
@@ -312,3 +318,28 @@ void CDisplayView::OnBnClickedDelete2()
 }
 
 
+
+
+void CDisplayView::OnBnClickedSendmsg()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(TRUE);//得到用户名和要发的消息
+	CString tar_user;
+	UserList.GetText(UserList.GetCurSel(), tar_user);
+	char sendbuf[MAX_BUF_SIZE]{};
+	int namelength = tar_user.GetLength() + m_user.GetLength();
+	int Slength = 5 + namelength + Msg_edit.GetLength();
+	sendbuf[0] = 22;
+	char* temp = &sendbuf[1];
+	// 多字节字符集下保证正确
+	*(u_short*)temp = htons(Slength);
+	temp = &sendbuf[3];
+	*(u_short*)temp = htons(namelength);
+	send(hCommSock, sendbuf, Slength, 0);
+}
+
+
+void CDisplayView::OnBnClickedSendfile()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
