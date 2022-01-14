@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "pch.h"
+#include "ChatWnd.h"
 
 
 // CDispalyView 窗体视图
@@ -74,7 +75,10 @@ public:
 	afx_msg void OnBnClickedUpload2();
 	afx_msg void OnBnClickedDownload2();
 	afx_msg void OnBnClickedDelete2();
+	afx_msg void OnBnClickedPrivatechat();
+	afx_msg void OnBnClickedPublicchat();
 
+	ChatWnd* dlg;
 };
 
 

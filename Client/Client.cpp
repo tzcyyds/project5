@@ -58,6 +58,8 @@ BOOL CClientApp::InitInstance()
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
 
+	AfxInitRichEdit2();//RichEdit2控件初始化
+
 	CWinApp::InitInstance();
 
 	//if (!AfxSocketInit())

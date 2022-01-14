@@ -15,14 +15,14 @@ CDisplayView::CDisplayView()
 	: CFormView(IDD_DISPLAYVIEW)
 	, m_user(_T("test"))
 	, m_password(_T("12345"))
-	,client_state(0)
+	, client_state(0)
 	, m_ip(0x7f000001)
 	, m_SPort(9190)
 	, m_LPort(9191)
 {
 	hCommSock = 0;
 	memset(&servAdr, 0, sizeof(servAdr));
-
+	dlg = NULL;
 }
 
 CDisplayView::~CDisplayView()
@@ -55,6 +55,8 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_UPLOAD2, &CDisplayView::OnBnClickedUpload2)
 	ON_BN_CLICKED(IDC_DOWNLOAD2, &CDisplayView::OnBnClickedDownload2)
 	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
+	ON_BN_CLICKED(IDC_PRIVATECHAT, &CDisplayView::OnBnClickedPrivatechat)
+	ON_BN_CLICKED(IDC_PUBLICCHAT, &CDisplayView::OnBnClickedPublicchat)
 END_MESSAGE_MAP()
 
 
@@ -149,7 +151,6 @@ void CDisplayView::OnBnClickedConnect()
 	return;
 }
 
-
 void CDisplayView::OnBnClickedDisconnect()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -164,7 +165,6 @@ void CDisplayView::OnBnClickedDisconnect()
 	else;
 	return;
 }
-
 
 void CDisplayView::OnBnClickedEnterdir()
 {
@@ -252,7 +252,6 @@ void CDisplayView::OnBnClickedUpload2()
 	return;
 }
 
-
 void CDisplayView::OnBnClickedDownload()
 {
 	if (client_state == 3) {
@@ -311,4 +310,21 @@ void CDisplayView::OnBnClickedDelete2()
 	return;
 }
 
+void CDisplayView::OnBnClickedPrivatechat()
+{
+	// TODO: Add your control notification handler code here
+	if (dlg == NULL)
+	{
+		dlg = new ChatWnd();
+	}
+	if (dlg != NULL)
+	{
+		BOOL isCreate = dlg->Create(IDD_CHATWND, this);
+		if (isCreate) dlg->ShowWindow(SW_SHOW);
+	}
+}
 
+void CDisplayView::OnBnClickedPublicchat()
+{
+	// TODO: Add your control notification handler code here
+}
