@@ -42,7 +42,8 @@ void CDisplayView::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT5, m_LPort);
 	DDX_Control(pDX, IDC_USERS, UserList);
 	DDX_Control(pDX, IDC_MSGLIST, Msg_list);
-	//  DDX_Control(pDX, IDC_MSGEDIT, Msg_edit);
+	//DDX_Control(pDX, IDC_MSGLIST, Msg_list);
+	//DDX_Control(pDX, IDC_MSGEDIT, Msg_edit);
 	DDX_Text(pDX, IDC_MSGEDIT, Msg_edit);
 }
 
@@ -60,6 +61,7 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_DOWNLOAD2, &CDisplayView::OnBnClickedDownload2)
 	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
 	ON_BN_CLICKED(IDC_SENDMSG, &CDisplayView::OnBnClickedSendmsg)
+	ON_BN_CLICKED(IDC_SENDMSGALL, &CDisplayView::OnBnClickedSendmsgall)
 	ON_BN_CLICKED(IDC_SENDFILE, &CDisplayView::OnBnClickedSendfile)
 END_MESSAGE_MAP()
 
@@ -155,7 +157,6 @@ void CDisplayView::OnBnClickedConnect()
 	return;
 }
 
-
 void CDisplayView::OnBnClickedDisconnect()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -170,7 +171,6 @@ void CDisplayView::OnBnClickedDisconnect()
 	else;
 	return;
 }
-
 
 void CDisplayView::OnBnClickedEnterdir()
 {
@@ -258,7 +258,6 @@ void CDisplayView::OnBnClickedUpload2()
 	return;
 }
 
-
 void CDisplayView::OnBnClickedDownload()
 {
 	if (client_state == 3) {
@@ -317,29 +316,71 @@ void CDisplayView::OnBnClickedDelete2()
 	return;
 }
 
-
-
-
 void CDisplayView::OnBnClickedSendmsg()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	UpdateData(TRUE);//得到用户名和要发的消息
 	CString tar_user;
-	UserList.GetText(UserList.GetCurSel(), tar_user);
-	char sendbuf[MAX_BUF_SIZE]{};
-	int namelength = tar_user.GetLength() + m_user.GetLength();
-	int Slength = 5 + namelength + Msg_edit.GetLength();
+	UserList.GetText(UserList.GetCurSel(), tar_user);//选框中选择的user是目标user
+	char sendbuf[MAX_BUF_SIZE] = { 0 };
+	int sendnamelen = m_user.GetLength();
+	int recvnamelen = tar_user.GetLength();
+	int Slength = 7 + recvnamelen + sendnamelen + Msg_edit.GetLength();
 	sendbuf[0] = 22;
 	char* temp = &sendbuf[1];
 	// 多字节字符集下保证正确
 	*(u_short*)temp = htons(Slength);
 	temp = &sendbuf[3];
-	*(u_short*)temp = htons(namelength);
+	*(u_short*)temp = htons(recvnamelen);
+	temp = &sendbuf[5];
+	*(u_short*)temp = htons(sendnamelen);
+	strcpy_s(&sendbuf[7], recvnamelen + 1, tar_user.GetString());
+	strcpy_s(&sendbuf[7 + recvnamelen], sendnamelen + 1, m_user.GetString());
+	strcpy_s(&sendbuf[7 + recvnamelen + sendnamelen], Msg_edit.GetLength() + 1, Msg_edit.GetString());
 	send(hCommSock, sendbuf, Slength, 0);
+	UpdateMsg(Msg_list, m_user.GetString(), tar_user.GetString(), Msg_edit.GetString(), RGB(255, 0, 0), 15);
+	Msg_edit.Empty();
+	UpdateData(FALSE);
 }
 
+void CDisplayView::OnBnClickedSendmsgall()
+{
+	// TODO: Add your control notification handler code here
+	UpdateData(TRUE);//得到用户名和要发的消息
+	CString tar_user;
+	char sendbuf[MAX_BUF_SIZE] = { 0 };
+	int sendnamelen = m_user.GetLength();
+	int recvnamelen, Slength;
+	char* temp;
+
+	int userCount = UserList.GetCount();
+	for (int i = 0; i < userCount; ++i)
+	{
+		tar_user.Empty();
+		UserList.GetText(i, tar_user);
+		if (tar_user == m_user) continue;
+		recvnamelen = tar_user.GetLength();
+		Slength = 7 + recvnamelen + sendnamelen + Msg_edit.GetLength();
+		memset(sendbuf, 0, MAX_BUF_SIZE);
+		sendbuf[0] = 22;
+		temp = &sendbuf[1];
+		*(u_short*)temp = htons(Slength);
+		temp = &sendbuf[3];
+		*(u_short*)temp = htons(recvnamelen);
+		temp = &sendbuf[5];
+		*(u_short*)temp = htons(sendnamelen);
+		strcpy_s(&sendbuf[7], recvnamelen + 1, tar_user.GetString());
+		strcpy_s(&sendbuf[7 + recvnamelen], sendnamelen + 1, m_user.GetString());
+		strcpy_s(&sendbuf[7 + recvnamelen + sendnamelen], Msg_edit.GetLength() + 1, Msg_edit.GetString());
+		send(hCommSock, sendbuf, Slength, 0);
+	}
+	UpdateMsg(Msg_list, m_user.GetString(), "ALL USERS", Msg_edit.GetString(), RGB(255, 0, 0), 15);
+	Msg_edit.Empty();
+	UpdateData(FALSE);
+}
 
 void CDisplayView::OnBnClickedSendfile()
 {
 	// TODO: 在此添加控件通知处理程序代码
 }
+

@@ -248,13 +248,25 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			}
 		}
 	case 21:
-	{
-		//用户列表初始化
-		CString user_list(&recvbuf[3], packet_len - 3);
-		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
-		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
-	}
+		{
+			//用户列表初始化
+			CString user_list(&recvbuf[3], packet_len - 3);
+			//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
+			UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
+		}
 		break;
+	case 22://接收经由服务器中转的聊天消息
+		{
+			temp = recvbuf + 3;
+			u_short recvnamelen = ntohs(*(u_short*)temp);//接收消息用户名长度
+			CString to(&recvbuf[7], recvnamelen);
+			temp = recvbuf + 5;
+			u_short sendnamelen = ntohs(*(u_short*)temp);//发送消息用户名长度
+			CString from(&recvbuf[7 + recvnamelen], sendnamelen);
+			if (to != pView->m_user) TRACE("\n聊天消息转发的用户不匹配");
+			CString recvtext(&recvbuf[7 + recvnamelen + sendnamelen], packet_len - (7 + recvnamelen + sendnamelen));
+			UpdateMsg(pView->Msg_list, from, to, recvtext, RGB(0, 0, 255), 15);
+		}
 	default:
 		break;
 	}

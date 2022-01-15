@@ -58,6 +58,7 @@ bool Enterdir(SOCKET hSocket,CListBox& f_name, CString& path) {
 
 	return 1;
 }
+
 bool Goback(SOCKET hSocket, CString& path) {
 	if (path.GetLength() != 0) // 判断不是初始化时的目录
 	{
@@ -85,6 +86,7 @@ bool Goback(SOCKET hSocket, CString& path) {
 
 	return 1;
 }
+
 bool Upload(CDisplayView* pView,bool is_share) {
 	char szFilters[] = "所有文件 (*.*)|*.*||";
 	CFileDialog fileDlg(TRUE, NULL, NULL,
@@ -132,6 +134,7 @@ bool Upload(CDisplayView* pView,bool is_share) {
 	}
 	return 1;
 }
+
 bool Download(CDisplayView* pView, bool is_share) {
 	CString downloadName;
 
@@ -188,6 +191,7 @@ bool Download(CDisplayView* pView, bool is_share) {
 	else return 0;//下载文件名为空
 	return 1;
 }
+
 bool m_Delete(CDisplayView* pView, bool is_share) {
 	CString deleteName;
 	char sendbuf[MAX_BUF_SIZE] = { 0 };
@@ -217,6 +221,7 @@ bool m_Delete(CDisplayView* pView, bool is_share) {
 	else return 0;//删除文件名为空
 	return 1;
 }
+
 bool m_Connect(CDisplayView* pView) {
 	char sendbuf[MAX_BUF_SIZE] = { 0 };
 	CClientDoc* pDoc = (CClientDoc*)pView->GetDocument();
@@ -279,5 +284,40 @@ bool m_Connect(CDisplayView* pView) {
 	send(pView->hCommSock, sendbuf, strLen + 4, 0);
 	TRACE("send account");
 	pView->client_state = 1;//连接成功,已发送用户名，等待质询
+	return 1;
+}
+
+bool UpdateMsg(CRichEditCtrl& f_name, CString from, CString to, CString recvtext, COLORREF rgb, int size) {
+	//更新收到的消息
+
+	time_t rawtime;
+	struct tm timeinfo;
+	char timE[40] = { 0 };
+	time(&rawtime);
+	localtime_s(&timeinfo, &rawtime);
+	//strftime(timE, 40, "Date:\n%Y-%m-%d\nTime:\n%I:%M:%S\n", &timeinfo);
+	strftime(timE, 40, "%Y-%m-%d %H:%M:%S", &timeinfo);
+	//printf("%s", timE);
+	CString m_time(timE);
+
+	CHARFORMAT cf;
+	ZeroMemory(&cf, sizeof(CHARFORMAT));
+	cf.cbSize = sizeof(CHARFORMAT);
+	cf.dwMask = CFM_BOLD | CFM_COLOR | CFM_FACE |
+		CFM_ITALIC | CFM_SIZE | CFM_UNDERLINE;
+	// cf.dwEffects = CFE_UNDERLINE;
+	cf.yHeight = (size - 2) * (size - 2);//文字高度
+	cf.crTextColor = rgb; //文字颜色
+	strcpy_s(cf.szFaceName, _T("等线"));//设置字体
+	f_name.SetSelectionCharFormat(cf);
+	f_name.SetSel(-1, -1);
+	f_name.ReplaceSel(m_time + "    from " + from + " to " + to + ":\n");
+
+	cf.yHeight = size * size;//文字高度
+	cf.crTextColor = RGB(0, 0, 0); //文字颜色
+	f_name.SetSelectionCharFormat(cf);
+	f_name.SetSel(-1, -1);
+	f_name.ReplaceSel(recvtext + "\n");
+
 	return 1;
 }
