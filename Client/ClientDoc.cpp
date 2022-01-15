@@ -292,7 +292,7 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 		SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
 		CString fileAbsPath = desktop;
 		CString fileExt = downloadName;
-		fileAbsPath += fileExt;
+		fileAbsPath = fileAbsPath + "\\" + fileExt;
 		//本地打开，接收上传文件
 		//这里判断逻辑稍复杂，区分了共享和独享两种情况
 		if (!((event == 53 && (pView->downloadFile.Open(fileAbsPath.GetString(),
@@ -310,7 +310,7 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			//回复拒绝上传
 			sendbuf[0] = 54;
 			temp = &sendbuf[1];
-			*(u_short*)temp = 6 + User1NameLen + User2NameLen;
+			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
 			temp = temp + 2;
 			*(char*)temp = 2;
 			temp = temp + 1;
@@ -331,7 +331,7 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			//回复允许上传
 			sendbuf[0] = 54;
 			temp = &sendbuf[1];
-			*(u_short*)temp = 6 + User1NameLen + User2NameLen;
+			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
 			temp = temp + 2;
 			*(char*)temp = 1;
 			temp = temp + 1;
@@ -759,7 +759,7 @@ void CClientDoc::socket_state9_fsm(SOCKET s)
 	}
 	case 55://收到传输完毕报文
 	{
-		if ((pView->leftToSend == 0)&&(recvbuf[5] == 1)) {
+		if ((pView->leftToSend == 0)&&(recvbuf[4] == 1)) {
 			pView->sequence = 0;
 			pView->uploadFile.Close();
 			pView->client_state = 3;

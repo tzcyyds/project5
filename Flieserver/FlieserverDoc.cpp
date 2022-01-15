@@ -722,8 +722,8 @@ void CFlieserverDoc::state7_fsm(SOCKET hSocket)
 	u_short packet_len;
 	int strLen = recv(hSocket, chunk_recv_buf, 3, 0);
 	if (strLen == 3) {
-		event = recvbuf[0];
-		temp = &recvbuf[1];
+		event = chunk_recv_buf[0];
+		temp = &chunk_recv_buf[1];
 		packet_len = ntohs(*(u_short*)temp);//此处用不到
 		//assert(packet_len > 3);
 		//此处将要接收数据报文，应该换更大的buf
@@ -779,7 +779,7 @@ void CFlieserverDoc::state9_fsm(SOCKET hSocket)
 	switch (event)
 	{
 	case 54: {
-		temp = temp + 3;
+		temp = &recvbuf[3];
 		if (*(char*)temp == 1) {
 			char User1NameLen;
 			char User2NameLen;
@@ -835,13 +835,13 @@ void CFlieserverDoc::state11_fsm(SOCKET hSocket)
 	switch (event)
 	{
 	case 8: {
-
+		m_linkInfo.SUMap[hSocket]->state = 10;
 		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
 	}
 		  break;
 
 	case 9: {
-
+		m_linkInfo.SUMap[hSocket]->state = 10;
 		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
 	}
 		  break;
@@ -849,8 +849,8 @@ void CFlieserverDoc::state11_fsm(SOCKET hSocket)
 	case 55: {
 		m_linkInfo.SUMap[hSocket]->state = 3;
 		m_linkInfo.SFMap[hSocket]->leftToTrans = 0;
-		m_linkInfo.SSMap[hSocket] = 0;
 		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
+		m_linkInfo.SSMap[hSocket] = 0;
 	}
 		   break;
 	default:
@@ -955,7 +955,7 @@ void CFlieserverDoc::state6_fsm_internal(SOCKET hSocket, char* buftemp, u_short 
 	switch (event)
 	{
 	case 54: {
-		temp = temp + 3;
+		temp = buftemp + 3;
 		if (*(char*)temp == 1) {
 			char User1NameLen;
 			char User2NameLen;
