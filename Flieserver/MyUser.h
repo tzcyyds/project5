@@ -24,6 +24,9 @@ struct Fileinfo
 	// 下载文件相关
 	CFile downloadFile;
 	ULONGLONG leftToRecv = 0;
+	// 中转文件相关
+	ULONGLONG leftToTrans = 0;
+
 };
 
 class UserDoc {
@@ -46,6 +49,7 @@ public:
 	std::unordered_map<SOCKET, User*> SUMap;
 	std::unordered_map<SOCKET, Fileinfo*> SFMap;
 	std::unordered_map<std::string, SOCKET> USMap;
+	std::unordered_map<SOCKET, SOCKET> SSMap;
 };
 
 

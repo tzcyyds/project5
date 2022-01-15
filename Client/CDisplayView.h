@@ -79,6 +79,7 @@ public:
 	afx_msg void OnBnClickedPublicchat();
 
 	ChatWnd* dlg;
+	afx_msg void OnBnClickedFiletrans();
 };
 
 

@@ -57,6 +57,7 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
 	ON_BN_CLICKED(IDC_PRIVATECHAT, &CDisplayView::OnBnClickedPrivatechat)
 	ON_BN_CLICKED(IDC_PUBLICCHAT, &CDisplayView::OnBnClickedPublicchat)
+	ON_BN_CLICKED(IDC_FILETRANS, &CDisplayView::OnBnClickedFiletrans)
 END_MESSAGE_MAP()
 
 
@@ -114,6 +115,15 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case 7://等待下载数据状态
 				pDoc->socket_state7_fsm(hSocket);
+				break;
+			case 8://等待客户2请求回复状态
+				pDoc->socket_state8_fsm(hSocket);
+				break;
+			case 9://等待中转数据回复状态
+				pDoc->socket_state9_fsm(hSocket);
+				break;
+			case 10://等待中转数据状态
+				pDoc->socket_state10_fsm(hSocket);
 				break;
 			default:
 				break;
@@ -327,4 +337,21 @@ void CDisplayView::OnBnClickedPrivatechat()
 void CDisplayView::OnBnClickedPublicchat()
 {
 	// TODO: Add your control notification handler code here
+}
+
+
+void CDisplayView::OnBnClickedFiletrans()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	if (client_state == 3) {
+		if (Transfer(this)) {
+
+		}
+		else {
+			AfxMessageBox("failed");
+		}
+	}
+	else;
+	return;
+
 }

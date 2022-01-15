@@ -132,6 +132,65 @@ bool Upload(CDisplayView* pView,bool is_share) {
 	}
 	return 1;
 }
+bool Transfer(CDisplayView* pView) {
+	char szFilters[] = "所有文件 (*.*)|*.*||";
+	CFileDialog fileDlg(TRUE, NULL, NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
+
+	char desktop[MAX_PATH] = { 0 };
+	SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
+	fileDlg.m_ofn.lpstrInitialDir = desktop;//把默认路径设置为桌面
+
+	if (fileDlg.DoModal() == IDOK)//弹出“打开”对话框
+	{
+		CString fileAbsPath = fileDlg.GetPathName();
+		CString uploadName = fileDlg.GetFileName();
+		if (!(pView->uploadFile.Open(fileAbsPath.GetString(),
+			CFile::modeRead | CFile::typeBinary, &pView->errFile)))
+		{
+			char errOpenFile[MAX_BUF_SIZE];
+			pView->errFile.GetErrorMessage(errOpenFile, 255);
+			TRACE("\nError occurred while opening file:\n"
+				"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
+				pView->errFile.m_strFileName, errOpenFile, pView->errFile.m_cause, pView->errFile.m_lOsError);
+			return 0;
+		}
+
+		char sendbuf[MAX_BUF_SIZE] = { 0 };
+		char* temp = sendbuf;
+
+		//获取客户1，客户2信息
+		CString User2Name;
+		pView->UserList.GetText(pView->UserList.GetCurSel(), User2Name);
+		char User1NameLen = pView->m_user.GetLength();
+		char User2NameLen = User2Name.GetLength();
+		//获取文件信息
+		u_short namelen = uploadName.GetLength();//此处有可能丢失信息
+		ULONGLONG fileLength = pView->uploadFile.GetLength();//64位
+		//装填中转请求报文
+		sendbuf[0] = 51;
+		temp = &sendbuf[1];
+		*(u_short*)temp = htons(11 + User1NameLen + User2NameLen + namelen);
+		sendbuf[3] = User1NameLen;
+		temp = &sendbuf[4];
+		strcpy_s(sendbuf + 4, User1NameLen + 1, pView->m_user);
+		temp = temp + User1NameLen;
+		*(char*)temp = User2NameLen;
+		temp = temp + 1;
+		strcpy_s(temp, User2NameLen + 1, User2Name);
+		temp = temp + User2NameLen;
+		*(u_short*)temp = htons(namelen);
+		temp = temp + 2;
+		strcpy_s(temp, namelen + 1, uploadName);
+		temp = temp + namelen;
+		*(u_long*)temp = htonl((u_long)fileLength);
+
+		pView->leftToSend = fileLength;
+		send(pView->hCommSock, sendbuf, 11 + User1NameLen + User2NameLen + namelen, 0);
+		pView->client_state = 8;
+	}
+	return 1;
+}
 bool Download(CDisplayView* pView, bool is_share) {
 	CString downloadName;
 

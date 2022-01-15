@@ -10,3 +10,4 @@ bool Upload(CDisplayView* pView, bool is_share);
 bool Download(CDisplayView* pView, bool is_share);
 bool m_Delete(CDisplayView* pView, bool is_share);
 bool m_Connect(CDisplayView* pView);
+bool Transfer(CDisplayView* pView);
