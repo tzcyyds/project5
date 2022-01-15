@@ -59,6 +59,8 @@ BOOL CClientApp::InitInstance()
 	InitCommonControlsEx(&InitCtrls);
 	AfxInitRichEdit2();
 
+	AfxInitRichEdit2();//RichEdit2控件初始化
+
 	CWinApp::InitInstance();
 
 	//if (!AfxSocketInit())

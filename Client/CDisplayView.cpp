@@ -15,7 +15,7 @@ CDisplayView::CDisplayView()
 	: CFormView(IDD_DISPLAYVIEW)
 	, m_user(_T("test"))
 	, m_password(_T("12345"))
-	,client_state(0)
+	, client_state(0)
 	, m_ip(0x7f000001)
 	, m_SPort(9190)
 	, m_LPort(9191)
@@ -23,7 +23,7 @@ CDisplayView::CDisplayView()
 {
 	hCommSock = 0;
 	memset(&servAdr, 0, sizeof(servAdr));
-
+	dlg = NULL;
 }
 
 CDisplayView::~CDisplayView()
@@ -63,6 +63,7 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_SENDMSG, &CDisplayView::OnBnClickedSendmsg)
 	ON_BN_CLICKED(IDC_SENDMSGALL, &CDisplayView::OnBnClickedSendmsgall)
 	ON_BN_CLICKED(IDC_SENDFILE, &CDisplayView::OnBnClickedSendfile)
+	ON_BN_CLICKED(IDC_FILETRANS, &CDisplayView::OnBnClickedFiletrans)
 END_MESSAGE_MAP()
 
 
@@ -120,6 +121,15 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				break;
 			case 7://等待下载数据状态
 				pDoc->socket_state7_fsm(hSocket);
+				break;
+			case 8://等待客户2请求回复状态
+				pDoc->socket_state8_fsm(hSocket);
+				break;
+			case 9://等待中转数据回复状态
+				pDoc->socket_state9_fsm(hSocket);
+				break;
+			case 10://等待中转数据状态
+				pDoc->socket_state10_fsm(hSocket);
 				break;
 			default:
 				break;
@@ -379,8 +389,16 @@ void CDisplayView::OnBnClickedSendmsgall()
 	UpdateData(FALSE);
 }
 
-void CDisplayView::OnBnClickedSendfile()
+void CDisplayView::OnBnClickedFiletrans()
 {
 	// TODO: 在此添加控件通知处理程序代码
+	if (client_state == 3) {
+		if (Transfer(this)) {
+		}
+		else {
+			AfxMessageBox("failed");
+		}
+	}
+	else;
+	return;
 }
-

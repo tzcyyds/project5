@@ -4,7 +4,7 @@
 #include "ClientDoc.h"
 
 bool SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c) {
-	// ×Ö·û´®·Ö¸îº¯Êý
+	// ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ö¸îº¯ï¿½ï¿½
 	std::string::size_type pos1, pos2;
 	pos2 = s.find(c);
 	pos1 = 0;
@@ -21,12 +21,12 @@ bool SplitString(const std::string& s, std::vector<std::string>& v, const std::s
 }
 
 bool UpdateDir(CListBox& f_name, CString recv) {
-	// ¸üÐÂÁÐ±íÏÔÊ¾µÄÎÄ¼þÄ¿Â¼
+	// ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ä¼ï¿½Ä¿Â¼
 	f_name.ResetContent();
 
 	std::vector<std::string> v;
 	std::string strStr = recv.GetBuffer(0);
-	SplitString(strStr, v, "|"); //¿É°´¶à¸ö×Ö·ûÀ´·Ö¸ô;
+	SplitString(strStr, v, "|"); //ï¿½É°ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½;
 
 	for (auto i = 0; i != v.size(); ++i)
 		f_name.AddString(v[i].c_str());
@@ -36,22 +36,22 @@ bool UpdateDir(CListBox& f_name, CString recv) {
 bool Enterdir(SOCKET hSocket,CListBox& f_name, CString& path) {
 	CString selFile;
 
-	f_name.GetText(f_name.GetCurSel(), selFile); //»ñÈ¡ÓÃ»§Ñ¡ÔñµÄÄ¿Â¼Ãû
+	f_name.GetText(f_name.GetCurSel(), selFile); //ï¿½ï¿½È¡ï¿½Ã»ï¿½Ñ¡ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½
 
-	if (selFile.Find('.') == -1) // ÅÐ¶ÏÊÇ·ñÎªÎÄ¼þ¼Ð£¬Ô­Àí£ºÎÄ¼þÃûÓÐ'.'
+	if (selFile.Find('.') == -1) // ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Îªï¿½Ä¼ï¿½ï¿½Ð£ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½'.'
 	{
 		char sendbuf[MAX_BUF_SIZE] = { 0 };
 		char* temp = nullptr;
-		path = selFile + "\\*";// ±¾µØ±£´æµ±Ç°µÄÎÄ¼þ¼ÐÂ·¾¶£¬ÔÚ·µ»ØÉÏÒ»¼¶ÎÄ¼þ¼ÐÊ±»áÊ¹ÓÃµ½
+		path = selFile + "\\*";// ï¿½ï¿½ï¿½Ø±ï¿½ï¿½æµ±Ç°ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ê¹ï¿½Ãµï¿½
 		int strLen = path.GetLength();
 		sendbuf[0] = 5;
 		temp = &sendbuf[1];
 		*(u_short*)temp = htons(strLen + 3);
 		//temp = m_send.GetBuffer();
-		//Ê¹ÓÃstrcpy,³¤¶ÈÈ«¶¼ÐèÒª+1£¡
+		//Ê¹ï¿½ï¿½strcpy,ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½ï¿½Òª+1ï¿½ï¿½
 		strcpy_s(&sendbuf[3], strLen + 1, path);
 		//m_send.ReleaseBuffer();
-		//´Ë´¦¿ÉÄÜ²»ÐèÒªÄÇÃ´¡°°²È«¡±µÄ·¢ËÍ·½Ê½
+		//ï¿½Ë´ï¿½ï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½Òªï¿½ï¿½Ã´ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ä·ï¿½ï¿½Í·ï¿½Ê½
 		send(hSocket, sendbuf, strLen + 3, 0);
 	}
 	else return 0;
@@ -60,12 +60,12 @@ bool Enterdir(SOCKET hSocket,CListBox& f_name, CString& path) {
 }
 
 bool Goback(SOCKET hSocket, CString& path) {
-	if (path.GetLength() != 0) // ÅÐ¶Ï²»ÊÇ³õÊ¼»¯Ê±µÄÄ¿Â¼
+	if (path.GetLength() != 0) // ï¿½Ð¶Ï²ï¿½ï¿½Ç³ï¿½Ê¼ï¿½ï¿½Ê±ï¿½ï¿½Ä¿Â¼
 	{
 		char sendbuf[MAX_BUF_SIZE] = { 0 };
 		char* temp = nullptr;
 		int pos;
-		//ÓÃ×Ö·û´®½ØÈ¡µÄ·½·¨»ñµÃÉÏÒ»¼¶Ä¿Â¼
+		//ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ä¿Â¼
 		pos = path.ReverseFind('\\');
 		path = path.Left(pos);
 		pos = path.ReverseFind('\\');
@@ -79,7 +79,7 @@ bool Goback(SOCKET hSocket, CString& path) {
 		//temp = strdirpath.GetBuffer();
 		strcpy_s(&sendbuf[3], strLen + 1, path);
 		//strdirpath.ReleaseBuffer();
-		//´Ë´¦¿ÉÄÜ²»ÐèÒªÄÇÃ´¡°°²È«¡±µÄ·¢ËÍ·½Ê½
+		//ï¿½Ë´ï¿½ï¿½ï¿½ï¿½Ü²ï¿½ï¿½ï¿½Òªï¿½ï¿½Ã´ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ä·ï¿½ï¿½Í·ï¿½Ê½
 		send(hSocket, sendbuf, strLen + 3, 0);
 	}
 	else return 0;
@@ -88,15 +88,15 @@ bool Goback(SOCKET hSocket, CString& path) {
 }
 
 bool Upload(CDisplayView* pView,bool is_share) {
-	char szFilters[] = "ËùÓÐÎÄ¼þ (*.*)|*.*||";
+	char szFilters[] = "ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ (*.*)|*.*||";
 	CFileDialog fileDlg(TRUE, NULL, NULL,
 		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
 
 	char desktop[MAX_PATH] = { 0 };
 	SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
-	fileDlg.m_ofn.lpstrInitialDir = desktop;//°ÑÄ¬ÈÏÂ·¾¶ÉèÖÃÎª×ÀÃæ
+	fileDlg.m_ofn.lpstrInitialDir = desktop;//ï¿½ï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
 
-	if (fileDlg.DoModal() == IDOK)//µ¯³ö¡°´ò¿ª¡±¶Ô»°¿ò
+	if (fileDlg.DoModal() == IDOK)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò¿ª¡ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
 	{
 		CString fileAbsPath = fileDlg.GetPathName();
 		CString uploadName = fileDlg.GetFileName();
@@ -113,24 +113,84 @@ bool Upload(CDisplayView* pView,bool is_share) {
 
 		char sendbuf[MAX_BUF_SIZE] = { 0 };
 		char* temp = sendbuf;
-		u_short namelen = uploadName.GetLength();//´Ë´¦ÓÐ¿ÉÄÜ¶ªÊ§ÐÅÏ¢
+		u_short namelen = uploadName.GetLength();//ï¿½Ë´ï¿½ï¿½Ð¿ï¿½ï¿½Ü¶ï¿½Ê§ï¿½ï¿½Ï¢
 		ULONGLONG fileLength = pView->uploadFile.GetLength();//64Î»
 
-		if(is_share) sendbuf[0] = 15;//¹²ÏíÄ¿Â¼ÉÏ´«ÇëÇó
-		else sendbuf[0] = 32;//¶ÀÏíÄ¿Â¼ÉÏ´«ÇëÇó
+		if(is_share) sendbuf[0] = 15;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½
+		else sendbuf[0] = 32;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ï´ï¿½ï¿½ï¿½ï¿½ï¿½
 
 		temp = &sendbuf[3];
 		*(u_short*)temp = htons(namelen);
 		strcpy_s(sendbuf + 5, namelen + 1, uploadName);
 		temp = &sendbuf[namelen + 5];
-		*(u_long*)temp = htonl((u_long)fileLength);//32Î»£¬¿ÉÄÜ»á¶ªÊ§Êý¾Ý
+		*(u_long*)temp = htonl((u_long)fileLength);//32Î»ï¿½ï¿½ï¿½ï¿½ï¿½Ü»á¶ªÊ§ï¿½ï¿½ï¿½ï¿½
 		temp = &sendbuf[1];
 		*(u_short*)temp = htons((u_short)(namelen + 9));
 
 		pView->leftToSend = fileLength;
 		send(pView->hCommSock, sendbuf, namelen + 9, 0);
 
-		pView->client_state = 4;//±äÎªµÈ´ýÉÏ´«È·ÈÏ×´Ì¬
+		pView->client_state = 4;//ï¿½ï¿½Îªï¿½È´ï¿½ï¿½Ï´ï¿½È·ï¿½ï¿½×´Ì¬
+	}
+	return 1;
+}
+
+bool Transfer(CDisplayView* pView) {
+	char szFilters[] = "ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ (*.*)|*.*||";
+	CFileDialog fileDlg(TRUE, NULL, NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
+
+	char desktop[MAX_PATH] = { 0 };
+	SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
+	fileDlg.m_ofn.lpstrInitialDir = desktop;//ï¿½ï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
+
+	if (fileDlg.DoModal() == IDOK)//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò¿ª¡ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
+	{
+		CString fileAbsPath = fileDlg.GetPathName();
+		CString uploadName = fileDlg.GetFileName();
+		if (!(pView->uploadFile.Open(fileAbsPath.GetString(),
+			CFile::modeRead | CFile::typeBinary, &pView->errFile)))
+		{
+			char errOpenFile[MAX_BUF_SIZE];
+			pView->errFile.GetErrorMessage(errOpenFile, 255);
+			TRACE("\nError occurred while opening file:\n"
+				"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
+				pView->errFile.m_strFileName, errOpenFile, pView->errFile.m_cause, pView->errFile.m_lOsError);
+			return 0;
+		}
+
+		char sendbuf[MAX_BUF_SIZE] = { 0 };
+		char* temp = sendbuf;
+
+		//ï¿½ï¿½È¡ï¿½Í»ï¿½1ï¿½ï¿½ï¿½Í»ï¿½2ï¿½ï¿½Ï¢
+		CString User2Name;
+		pView->UserList.GetText(pView->UserList.GetCurSel(), User2Name);
+		char User1NameLen = pView->m_user.GetLength();
+		char User2NameLen = User2Name.GetLength();
+		//ï¿½ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½Ï¢
+		u_short namelen = uploadName.GetLength();//ï¿½Ë´ï¿½ï¿½Ð¿ï¿½ï¿½Ü¶ï¿½Ê§ï¿½ï¿½Ï¢
+		ULONGLONG fileLength = pView->uploadFile.GetLength();//64Î»
+		//×°ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+		sendbuf[0] = 51;
+		temp = &sendbuf[1];
+		*(u_short*)temp = htons(11 + User1NameLen + User2NameLen + namelen);
+		sendbuf[3] = User1NameLen;
+		temp = &sendbuf[4];
+		strcpy_s(sendbuf + 4, User1NameLen + 1, pView->m_user);
+		temp = temp + User1NameLen;
+		*(char*)temp = User2NameLen;
+		temp = temp + 1;
+		strcpy_s(temp, User2NameLen + 1, User2Name);
+		temp = temp + User2NameLen;
+		*(u_short*)temp = htons(namelen);
+		temp = temp + 2;
+		strcpy_s(temp, namelen + 1, uploadName);
+		temp = temp + namelen;
+		*(u_long*)temp = htonl((u_long)fileLength);
+
+		pView->leftToSend = fileLength;
+		send(pView->hCommSock, sendbuf, 11 + User1NameLen + User2NameLen + namelen, 0);
+		pView->client_state = 8;
 	}
 	return 1;
 }
@@ -138,21 +198,21 @@ bool Upload(CDisplayView* pView,bool is_share) {
 bool Download(CDisplayView* pView, bool is_share) {
 	CString downloadName;
 
-	if (is_share) pView->FileName.GetText(pView->FileName.GetCurSel(), downloadName); //¶ÀÏíÄ¿Â¼»ñµÃÏëÒªÏÂÔØ×ÊÔ´Ãû
-	else pView->FileName2.GetText(pView->FileName2.GetCurSel(), downloadName); //¶ÀÏíÄ¿Â¼»ñµÃÏëÒªÏÂÔØ×ÊÔ´Ãû
+	if (is_share) pView->FileName.GetText(pView->FileName.GetCurSel(), downloadName); //ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½
+	else pView->FileName2.GetText(pView->FileName2.GetCurSel(), downloadName); //ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½
 	
 	if (!downloadName.IsEmpty())
 	{
-		//µ¯³öÁí´æÎª¶Ô»°¿ò
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½Ô»ï¿½ï¿½ï¿½
 		CString fileExt = downloadName.Right(downloadName.GetLength() - downloadName.ReverseFind('.'));
-		char szFilters[MAX_PATH] = { 0 };//¾ÓÈ»ÓÐ¿ÉÄÜÌ«Ð¡
+		char szFilters[MAX_PATH] = { 0 };//ï¿½ï¿½È»ï¿½Ð¿ï¿½ï¿½ï¿½Ì«Ð¡
 		sprintf_s(szFilters, "(*%s)|*%s||", fileExt.GetString(), fileExt.GetString());
 		CFileDialog fileDlg(FALSE, NULL, downloadName,
 			OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
 
 		char desktop[MAX_PATH] = { 0 };
 		SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
-		fileDlg.m_ofn.lpstrInitialDir = desktop;//°ÑÄ¬ÈÏÂ·¾¶ÉèÖÃÎª×ÀÃæ
+		fileDlg.m_ofn.lpstrInitialDir = desktop;//ï¿½ï¿½Ä¬ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
 
 		if (fileDlg.DoModal() == IDOK)
 		{
@@ -172,23 +232,23 @@ bool Download(CDisplayView* pView, bool is_share) {
 				return 0;
 			}
 
-			u_short nameLength = downloadName.GetLength();//´Ë´¦ÓÐ¿ÉÄÜ¶ªÊ§ÐÅÏ¢
+			u_short nameLength = downloadName.GetLength();//ï¿½Ë´ï¿½ï¿½Ð¿ï¿½ï¿½Ü¶ï¿½Ê§ï¿½ï¿½Ï¢
 			char sendbuf[MAX_BUF_SIZE] = { 0 };
 		
-			if (is_share) sendbuf[0] = 11;//¹²ÏíÄ¿Â¼ÏÂÔØÇëÇó
-			else sendbuf[0] = 31;//¶ÀÏíÄ¿Â¼ÏÂÔØÇëÇó
+			if (is_share) sendbuf[0] = 11;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			else sendbuf[0] = 31;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 			char* temp = sendbuf + 1;
 			*(u_short*)temp = htons(nameLength + 5);
 			temp = temp + 2;
 			*(u_short*)temp = htons(nameLength);
-			strcpy_s(sendbuf + 5, nameLength + 1, downloadName);//downloadName²»Ó¦¸Ã°üº¬Â·¾¶
+			strcpy_s(sendbuf + 5, nameLength + 1, downloadName);//downloadNameï¿½ï¿½Ó¦ï¿½Ã°ï¿½ï¿½ï¿½Â·ï¿½ï¿½
 			send(pView->hCommSock, sendbuf, nameLength + 5, 0);
 
-			pView->client_state = 6;//±äÎªµÈ´ýÏÂÔØÈ·ÈÏ×´Ì¬
+			pView->client_state = 6;//ï¿½ï¿½Îªï¿½È´ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½×´Ì¬
 		}
 	}
-	else return 0;//ÏÂÔØÎÄ¼þÃûÎª¿Õ
+	else return 0;//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Îªï¿½ï¿½
 	return 1;
 }
 
@@ -197,19 +257,19 @@ bool m_Delete(CDisplayView* pView, bool is_share) {
 	char sendbuf[MAX_BUF_SIZE] = { 0 };
 	char* temp = sendbuf;
 
-	if (is_share)pView->FileName.GetText(pView->FileName.GetCurSel(), deleteName); // »ñÈ¡ÓÃ»§ÒªÉ¾³ýµÄ¹²ÏíÄ¿Â¼ÎÄ¼þÃû
-	else pView->FileName2.GetText(pView->FileName2.GetCurSel(), deleteName); // »ñÈ¡ÓÃ»§ÒªÉ¾³ýµÄ¶ÀÏíÄ¿Â¼ÎÄ¼þÃû
+	if (is_share)pView->FileName.GetText(pView->FileName.GetCurSel(), deleteName); // ï¿½ï¿½È¡ï¿½Ã»ï¿½ÒªÉ¾ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ä¼ï¿½ï¿½ï¿½
+	else pView->FileName2.GetText(pView->FileName2.GetCurSel(), deleteName); // ï¿½ï¿½È¡ï¿½Ã»ï¿½ÒªÉ¾ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½Ä¿Â¼ï¿½Ä¼ï¿½ï¿½ï¿½
 
 	if (!deleteName.IsEmpty())
 	{
-		if (AfxMessageBox((CString)"È·¶¨ÒªÉ¾³ýÕâ¸öÎÄ¼þ£¿", 4 + 48) == IDYES)
+		if (AfxMessageBox((CString)"È·ï¿½ï¿½ÒªÉ¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½", 4 + 48) == IDYES)
 		{
-			//deleteName = strdirpath.Left(strdirpath.GetLength() - 1) + deleteName;//Æ´³ÉÕýÈ·µÄÎÄ¼þÃû
-			//²»´øÂ·¾¶
+			//deleteName = strdirpath.Left(strdirpath.GetLength() - 1) + deleteName;//Æ´ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+			//ï¿½ï¿½ï¿½ï¿½Â·ï¿½ï¿½
 			int nameLength = deleteName.GetLength();
 
-			if (is_share) sendbuf[0] = 19;//¹²ÏíÄ¿Â¼É¾³ýÇëÇó
-			else sendbuf[0] = 33;//¶ÀÏíÄ¿Â¼É¾³ýÇëÇó
+			if (is_share) sendbuf[0] = 19;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+			else sendbuf[0] = 33;//ï¿½ï¿½ï¿½ï¿½Ä¿Â¼É¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 			temp = &sendbuf[1];
 			*(u_short*)temp = htons((nameLength + 3));
@@ -218,7 +278,7 @@ bool m_Delete(CDisplayView* pView, bool is_share) {
 			send(pView->hCommSock, sendbuf, nameLength + 3, 0);
 		}
 	}
-	else return 0;//É¾³ýÎÄ¼þÃûÎª¿Õ
+	else return 0;//É¾ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Îªï¿½ï¿½
 	return 1;
 }
 
@@ -226,20 +286,20 @@ bool m_Connect(CDisplayView* pView) {
 	char sendbuf[MAX_BUF_SIZE] = { 0 };
 	CClientDoc* pDoc = (CClientDoc*)pView->GetDocument();
 
-	// ÅÐ¶ÏÒì³£Çé¿ö
+	// ï¿½Ð¶ï¿½ï¿½ì³£ï¿½ï¿½ï¿½
 	if (pView->m_ip == NULL)
 	{
-		TRACE(_T("IPµØÖ·Îª¿Õ£¡"));
+		TRACE(_T("IPï¿½ï¿½Ö·Îªï¿½Õ£ï¿½"));
 		return 0;
 	}
 	else if (pView->m_SPort == NULL)
 	{
-		TRACE(_T("ÔÆ¶Ë¶Ë¿ÚÎª¿Õ£¡"));
+		TRACE(_T("ï¿½Æ¶Ë¶Ë¿ï¿½Îªï¿½Õ£ï¿½"));
 		return 0;
 	}
 	else if (pView->m_LPort == NULL)
 	{
-		TRACE(_T("±¾µØ¶Ë¿ÚÎª¿Õ£¡"));
+		TRACE(_T("ï¿½ï¿½ï¿½Ø¶Ë¿ï¿½Îªï¿½Õ£ï¿½"));
 		return 0;
 	}
 
@@ -261,34 +321,34 @@ bool m_Connect(CDisplayView* pView) {
 	}
 
 
-	if (connect(pView->hCommSock, (SOCKADDR*)&(pView->servAdr), sizeof(pView->servAdr)) == SOCKET_ERROR)//ÒþÊ½°ó¶¨£¬Á¬½Ó·þÎñÆ÷
+	if (connect(pView->hCommSock, (SOCKADDR*)&(pView->servAdr), sizeof(pView->servAdr)) == SOCKET_ERROR)//ï¿½ï¿½Ê½ï¿½ó¶¨£ï¿½ï¿½ï¿½ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½
 	{
 		TRACE("connect() failed");
 		return 0;
 	}
-	//ÀíÂÛÉÏÕâÀïµÄconnectÊÇ×èÈûµÄ£¬µ«ÊÇwinsockµÄÊµÏÖÊÇ3ÃëÑÓÊ±£¬³¬Ê±¾Í·µ»Ø´íÎó¡£
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½connectï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½winsockï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½3ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ê±ï¿½Í·ï¿½ï¿½Ø´ï¿½ï¿½ï¿½
 	if (WSAAsyncSelect(pView->hCommSock, pView->m_hWnd, WM_SOCK, FD_READ | FD_CLOSE) == SOCKET_ERROR)
 	{
 		TRACE("WSAAsyncSelect() failed");
 		return 0;
 	}
 
-	//·¢ËÍÓÃ»§Ãû±¨ÎÄ
-	sendbuf[0] = 1;//ÌîÐ´ÊÂ¼þºÅ
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	sendbuf[0] = 1;//ï¿½ï¿½Ð´ï¿½Â¼ï¿½ï¿½ï¿½
 
 	int strLen = pView->m_user.GetLength();
-	sendbuf[3] = strLen % 256;//ÌîÐ´×Ö·û´®³¤¶È£¨ÓÃ»§Ãû×Ö·û´®³¤¶ÈÐèÒªÐ¡ÓÚ256£©
-	memcpy(sendbuf + 4, pView->m_user, strLen);//ÌîÐ´ÓÃ»§Ãû×Ö·û´®
+	sendbuf[3] = strLen % 256;//ï¿½ï¿½Ð´ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÐ¡ï¿½ï¿½256ï¿½ï¿½
+	memcpy(sendbuf + 4, pView->m_user, strLen);//ï¿½ï¿½Ð´ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
 	char* temp = &sendbuf[1];
 	*(u_short*)temp = htons((4 + strLen));
 	send(pView->hCommSock, sendbuf, strLen + 4, 0);
 	TRACE("send account");
-	pView->client_state = 1;//Á¬½Ó³É¹¦,ÒÑ·¢ËÍÓÃ»§Ãû£¬µÈ´ýÖÊÑ¯
+	pView->client_state = 1;//ï¿½ï¿½ï¿½Ó³É¹ï¿½,ï¿½Ñ·ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È´ï¿½ï¿½ï¿½Ñ¯
 	return 1;
 }
 
 bool UpdateMsg(CRichEditCtrl& f_name, CString from, CString to, CString recvtext, COLORREF rgb, int size) {
-	//¸üÐÂÊÕµ½µÄÏûÏ¢
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
 
 	time_t rawtime;
 	struct tm timeinfo;
@@ -306,15 +366,15 @@ bool UpdateMsg(CRichEditCtrl& f_name, CString from, CString to, CString recvtext
 	cf.dwMask = CFM_BOLD | CFM_COLOR | CFM_FACE |
 		CFM_ITALIC | CFM_SIZE | CFM_UNDERLINE;
 	// cf.dwEffects = CFE_UNDERLINE;
-	cf.yHeight = (size - 2) * (size - 2);//ÎÄ×Ö¸ß¶È
-	cf.crTextColor = rgb; //ÎÄ×ÖÑÕÉ«
-	strcpy_s(cf.szFaceName, _T("µÈÏß"));//ÉèÖÃ×ÖÌå
+	cf.yHeight = (size - 2) * (size - 2);//ï¿½ï¿½ï¿½Ö¸ß¶ï¿½
+	cf.crTextColor = rgb; //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
+	strcpy_s(cf.szFaceName, _T("ï¿½ï¿½ï¿½ï¿½"));//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	f_name.SetSelectionCharFormat(cf);
 	f_name.SetSel(-1, -1);
 	f_name.ReplaceSel(m_time + "    from " + from + " to " + to + ":\n");
 
-	cf.yHeight = size * size;//ÎÄ×Ö¸ß¶È
-	cf.crTextColor = RGB(0, 0, 0); //ÎÄ×ÖÑÕÉ«
+	cf.yHeight = size * size;//ï¿½ï¿½ï¿½Ö¸ß¶ï¿½
+	cf.crTextColor = RGB(0, 0, 0); //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É«
 	f_name.SetSelectionCharFormat(cf);
 	f_name.SetSel(-1, -1);
 	f_name.ReplaceSel(recvtext + "\n");

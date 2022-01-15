@@ -533,6 +533,23 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 				}
 			}
 			send(tarSock, recvbuf, packet_len, 0);//把报文转发给目标用户
+	case 51://请求中转
+		{
+			recvbuf[0] = 52;//更改type
+			char User2Name[100] = {0};
+			char User1NameLen;
+			char User2NameLen;
+			temp = &recvbuf[3];
+			User1NameLen = *(char*)temp;
+			temp = temp + 1 + User1NameLen;
+			User2NameLen = *(char*)temp;
+			temp = temp + 1;
+			memcpy(User2Name, temp, User2NameLen);
+			User2Name[User2NameLen] = '\0';
+			std::string User2Name_String;
+			User2Name_String = User2Name;
+			state_event_interface(m_linkInfo.USMap[User2Name_String], recvbuf, packet_len);
+			m_linkInfo.SUMap[hSocket]->state = 6;
 		}
 		break;
 	default:
@@ -693,6 +710,338 @@ void CFlieserverDoc::state5_fsm(SOCKET hSocket)
 		break;
 	}
 
+}
+void CFlieserverDoc::state7_fsm(SOCKET hSocket)
+{
+	char chunk_recv_buf[CHUNK_SIZE] = { 0 };
+	char sendbuf[MAX_BUF_SIZE] = { 0 };
+	char recvbuf[MAX_BUF_SIZE] = { 0 };
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	int strLen = recv(hSocket, chunk_recv_buf, 3, 0);
+	if (strLen == 3) {
+		event = recvbuf[0];
+		temp = &recvbuf[1];
+		packet_len = ntohs(*(u_short*)temp);//此处用不到
+		//assert(packet_len > 3);
+		//此处将要接收数据报文，应该换更大的buf
+	}
+	else return;
+
+	switch (event)
+	{
+	case 7://收到上传数据
+	{
+		u_int writeChunkSize = (m_linkInfo.SFMap[hSocket]->leftToTrans < CHUNK_SIZE - 6) ? m_linkInfo.SFMap[hSocket]->leftToTrans : CHUNK_SIZE - 6;//#define CHUNK_SIZE 4096
+		if (RecvOnce(hSocket, chunk_recv_buf + 3, writeChunkSize + 3) == FALSE)//太奇怪了，这里为啥要加3才能收完所有数据？
+		{//奥！因为前面多收了sequence和data_len
+		//淦，还要考虑两个边界，最大只能收4093个
+			DWORD errSend = WSAGetLastError();
+			TRACE("\nError occurred while receiving file chunks\n"
+				"\tGetLastError = %d\n", errSend);
+			ASSERT(errSend != WSAEWOULDBLOCK);
+		}
+		//数据报文中的序号被我忽略了，按理说，可以做一个判断
+		temp = chunk_recv_buf + 1;
+		u_short data_len = ntohs(*(u_short*)temp);
+		temp = temp + 2;
+		m_linkInfo.SFMap[hSocket]->leftToTrans -= data_len;
+		state_event_interface(m_linkInfo.SSMap[hSocket], chunk_recv_buf, writeChunkSize + 6);
+		m_linkInfo.SUMap[hSocket]->state = 8;
+
+	}
+	break;
+	default:
+		break;
+	}
+}
+
+void CFlieserverDoc::state9_fsm(SOCKET hSocket)
+{
+	char chunk_send_buf[CHUNK_SIZE] = { 0 };
+	char recvbuf[MAX_BUF_SIZE] = { 0 };
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	int strLen = recv(hSocket, recvbuf, 3, 0);
+	if (strLen == 3) {
+		event = recvbuf[0];
+		temp = &recvbuf[1];
+		packet_len = ntohs(*(u_short*)temp);
+		assert(packet_len > 3);
+		strLen = recv(hSocket, recvbuf + 3, packet_len - 3, 0);
+		assert(strLen == packet_len - 3);
+	}
+	else return;
+
+	switch (event)
+	{
+	case 54: {
+		temp = temp + 3;
+		if (*(char*)temp == 1) {
+			char User1NameLen;
+			char User2NameLen;
+			temp = temp + 1;
+			User1NameLen = *(char*)temp;
+			temp = temp + 1;
+			CString User1Name(temp, User1NameLen);
+			temp = temp + User1NameLen;
+			User2NameLen = *(char*)temp;
+			temp = temp + 1;
+			CString User2Name(temp, User2NameLen);
+			temp = temp + User2NameLen;
+			SOCKET user1 = m_linkInfo.USMap[User1Name.GetString()];
+			SOCKET user2 = m_linkInfo.USMap[User2Name.GetString()];
+			m_linkInfo.SSMap[user2] = user1;
+			u_long fileLength = ntohl(*(u_long*)temp);
+			m_linkInfo.SFMap[hSocket]->leftToTrans = fileLength;
+			m_linkInfo.SUMap[hSocket]->state = 10;
+			state_event_interface(user1, recvbuf, packet_len);
+
+		}
+		else if (*(char*)temp == 2) {
+			m_linkInfo.SUMap[hSocket]->state = 3;
+		}
+		else {
+
+		}
+	}
+		break;
+	default:
+		break;
+	}
+
+}
+void CFlieserverDoc::state11_fsm(SOCKET hSocket)
+{
+	char chunk_send_buf[CHUNK_SIZE] = { 0 };
+	char recvbuf[MAX_BUF_SIZE] = { 0 };
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	int strLen = recv(hSocket, recvbuf, 3, 0);
+	if (strLen == 3) {
+		event = recvbuf[0];
+		temp = &recvbuf[1];
+		packet_len = ntohs(*(u_short*)temp);
+		assert(packet_len > 3);
+		strLen = recv(hSocket, recvbuf + 3, packet_len - 3, 0);
+		assert(strLen == packet_len - 3);
+	}
+	else return;
+
+	switch (event)
+	{
+	case 8: {
+
+		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
+	}
+		break;
+
+	case 9: {
+
+		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
+	}
+		break;
+
+	case 55: {
+		m_linkInfo.SUMap[hSocket]->state = 3;
+		m_linkInfo.SFMap[hSocket]->leftToTrans = 0;
+		m_linkInfo.SSMap[hSocket] = 0;
+		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
+	}
+		break;
+	default:
+		break;
+	}
+
+}
+
+void CFlieserverDoc::state_event_interface(SOCKET hSocket, char* buftemp, u_short buflen)
+{
+	//设定状态
+	int m_state = m_linkInfo.SUMap[hSocket]->state;
+	//switch 根据状态
+	switch (m_state)
+	{
+	case 0://不该有的状态。
+		break;
+	case 1://等待用户名，并发送质询
+		state1_fsm(hSocket);
+		//连接建立状态
+		break;
+	case 2://等待质询结果
+		state2_fsm(hSocket);
+		//等待质询结果状态
+		break;
+	case 3:
+		//用户已在线，等待其它指令。
+		state3_fsm_internal(hSocket, buftemp, buflen);
+		break;
+	case 4:
+		//在接收上传文件数据状态，接收数据
+		state4_fsm(hSocket);
+		break;
+	case 5:
+		//等待下载数据确认状态
+		state5_fsm(hSocket);
+		break;
+	case 6:
+		//等待接收端套接字回应请求状态
+		state6_fsm_internal(hSocket, buftemp, buflen);
+		break;
+	case 7:
+		//等待发送端发送数据状态
+		state7_fsm(hSocket);
+		break;
+	case 8:
+		//等待接收端套接字回应数据状态
+		state8_fsm_internal(hSocket, buftemp, buflen);
+		break;
+	case 9:
+		//等待接收端客户回应请求状态
+		state9_fsm(hSocket);
+		break;
+	case 10:
+		//等待发送端套接字发送数据状态
+		state10_fsm_internal(hSocket, buftemp, buflen);
+		break;
+	case 11:
+		//等待接收端客户回应数据状态
+		state11_fsm(hSocket);
+		break;
+	default:
+		break;
+	}
+}
+
+void CFlieserverDoc::state3_fsm_internal(SOCKET hSocket, char* buftemp, u_short buflen)
+{
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	temp = buftemp;
+	event = buftemp[0];
+	temp = temp + 1;
+	packet_len = ntohs(*(u_short*)temp);
+
+	switch (event)
+	{
+	case 52: {
+		temp = buftemp;
+		*(char*)temp = 53;
+		send(hSocket, buftemp, buflen, 0);
+		m_linkInfo.SUMap[hSocket]->state = 9;
+	}
+		break;
+
+	default:
+		break;
+	}
+}
+
+void CFlieserverDoc::state6_fsm_internal(SOCKET hSocket, char* buftemp, u_short buflen)
+{
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	temp = buftemp;
+	event = buftemp[0];
+	temp = temp + 1;
+	packet_len = ntohs(*(u_short*)temp);
+
+	switch (event)
+	{
+	case 54: {
+		temp = temp + 3;
+		if (*(char*)temp == 1) {
+			char User1NameLen;
+			char User2NameLen;
+			temp = temp + 1;
+			User1NameLen = *(char*)temp;
+			temp = temp + 1;
+			CString User1Name(temp, User1NameLen);
+			temp = temp + User1NameLen;
+			User2NameLen = *(char*)temp;
+			temp = temp + 1;
+			CString User2Name(temp, User2NameLen);
+			temp = temp + User2NameLen;
+			SOCKET user1 = m_linkInfo.USMap[User1Name.GetString()];
+			SOCKET user2 = m_linkInfo.USMap[User2Name.GetString()];
+			m_linkInfo.SSMap[user1] = user2;
+			u_long fileLength = ntohl(*(u_long*)temp);
+			m_linkInfo.SFMap[hSocket]->leftToTrans = fileLength;
+			send(hSocket, buftemp, packet_len,0);
+			m_linkInfo.SUMap[hSocket]->state = 7;
+
+		}
+		else if (*(char*)temp == 2) {
+			m_linkInfo.SUMap[hSocket]->state = 3;
+		}
+		else {
+
+		}
+	}
+		   break;
+
+	default:
+		break;
+	}
+}
+void CFlieserverDoc::state8_fsm_internal(SOCKET hSocket, char* buftemp, u_short buflen)
+{
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	temp = buftemp;
+	event = buftemp[0];
+	temp = temp + 1;
+	packet_len = ntohs(*(u_short*)temp);
+
+	switch (event)
+	{
+	case 8: {
+		send(hSocket, buftemp, packet_len, 0);
+		m_linkInfo.SUMap[hSocket]->state = 7;
+	}
+		  break;
+	case 9: {
+		send(hSocket, buftemp, packet_len, 0);
+		m_linkInfo.SUMap[hSocket]->state = 7;
+	}
+		  break;
+	case 55: {
+		send(hSocket, buftemp, packet_len, 0);
+		m_linkInfo.SUMap[hSocket]->state = 3;
+		m_linkInfo.SFMap[hSocket]->leftToTrans = 0;
+		m_linkInfo.SSMap[hSocket] = 0;
+	}
+		  break;
+	default:
+		break;
+	}
+}
+void CFlieserverDoc::state10_fsm_internal(SOCKET hSocket, char* buftemp, u_short buflen)
+{
+	char* temp = nullptr;
+	char event;
+	u_short packet_len;
+	temp = buftemp;
+	event = buftemp[0];
+	temp = temp + 1;
+	packet_len = ntohs(*(u_short*)temp);
+
+	switch (event)
+	{
+	case 7: {
+			send(hSocket, buftemp, packet_len, 0);
+			m_linkInfo.SUMap[hSocket]->state = 11;
+	}
+		   break;
+	default:
+		break;
+	}
 }
 
 BOOL CFlieserverDoc::OnNewDocument()
