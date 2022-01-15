@@ -297,7 +297,7 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			//回复拒绝上传
 			sendbuf[0] = 54;
 			temp = &sendbuf[1];
-			*(u_short*)temp = 6 + User1NameLen + User2NameLen;
+			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
 			temp = temp + 2;
 			*(char*)temp = 2;
 			temp = temp + 1;
@@ -311,14 +311,14 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			temp = temp + User2NameLen;
 			*(u_long*)temp = htonl(fileLength);
 			send(s, sendbuf, 10 + User1NameLen + User2NameLen, 0);
-
+			pView->client_state = 3;
 		}
 		else
 		{
 			//回复允许上传
 			sendbuf[0] = 54;
 			temp = &sendbuf[1];
-			*(u_short*)temp = 6 + User1NameLen + User2NameLen;
+			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
 			temp = temp + 2;
 			*(char*)temp = 1;
 			temp = temp + 1;

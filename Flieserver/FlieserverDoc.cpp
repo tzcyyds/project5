@@ -763,7 +763,7 @@ void CFlieserverDoc::state9_fsm(SOCKET hSocket)
 	switch (event)
 	{
 	case 54: {
-		temp = temp + 3;
+		temp = &recvbuf[3];
 		if (*(char*)temp == 1) {
 			char User1NameLen;
 			char User2NameLen;
@@ -819,13 +819,13 @@ void CFlieserverDoc::state11_fsm(SOCKET hSocket)
 	switch (event)
 	{
 	case 8: {
-
+		m_linkInfo.SUMap[hSocket]->state = 10;
 		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
 	}
 		break;
 
 	case 9: {
-
+		m_linkInfo.SUMap[hSocket]->state = 10;
 		state_event_interface(m_linkInfo.SSMap[hSocket], recvbuf, packet_len);
 	}
 		break;
