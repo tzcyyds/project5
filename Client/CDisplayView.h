@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "pch.h"
+#include "ChatWnd.h"
 
 
 // CDispalyView 窗体视图
@@ -35,6 +36,10 @@ public:
 	CListBox FileName;
 	CListBox FileName2;
 	CListBox UserList;
+	CRichEditCtrl Msg_list;
+	//CListBox Msg_list;
+	CString Msg_edit;
+	//CEdit Msg_edit;
 	//CIPAddressCtrl ServerIP;
 	DWORD m_ip;
 	// server port
@@ -74,7 +79,9 @@ public:
 	afx_msg void OnBnClickedUpload2();
 	afx_msg void OnBnClickedDownload2();
 	afx_msg void OnBnClickedDelete2();
-
+	afx_msg void OnBnClickedSendmsg();
+	afx_msg void OnBnClickedSendmsgall();
+	afx_msg void OnBnClickedFiletrans();
 };
 
 

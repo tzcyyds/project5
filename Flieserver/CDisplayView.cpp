@@ -132,6 +132,18 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 				//等待下载数据确认状态
 				pDoc->state5_fsm(hSocket);
 				break;
+			case 7:
+				//等待发送端发送数据状态
+				pDoc->state7_fsm(hSocket);
+				break;
+			case 9:
+				//等待接收端客户回应请求
+				pDoc->state9_fsm(hSocket);
+				break;
+			case 11:
+				//等待接收端客户回应数据
+				pDoc->state11_fsm(hSocket);
+				break;
 			default:
 				break;
 			}

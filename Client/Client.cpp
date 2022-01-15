@@ -57,6 +57,9 @@ BOOL CClientApp::InitInstance()
 	// 公共控件类。
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
+	AfxInitRichEdit2();
+
+	AfxInitRichEdit2();//RichEdit2控件初始化
 
 	CWinApp::InitInstance();
 
