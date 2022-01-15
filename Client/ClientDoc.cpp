@@ -267,6 +267,7 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			CString recvtext(&recvbuf[7 + recvnamelen + sendnamelen], packet_len - (7 + recvnamelen + sendnamelen));
 			UpdateMsg(pView->Msg_list, from, to, recvtext, RGB(0, 0, 255), 15);
 		}
+		break;
 	case 53:
 	{
 		//收到服务器中转类型请求报文

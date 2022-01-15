@@ -30,9 +30,7 @@
 #define IDC_DELETE2                     1023
 #define IDC_USERS                       1025
 #define IDC_MSGEDIT                     1027
-#define IDC_LIST3                       1028
 #define IDC_MSGLIST                     1028
-#define IDC_SENDFILE                    1029
 #define IDC_SENDMSGALL                  1030
 #define IDC_FILETRANS                   1034
 

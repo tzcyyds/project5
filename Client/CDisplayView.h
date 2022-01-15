@@ -81,7 +81,6 @@ public:
 	afx_msg void OnBnClickedDelete2();
 	afx_msg void OnBnClickedSendmsg();
 	afx_msg void OnBnClickedSendmsgall();
-	afx_msg void OnBnClickedSendfile();
 	afx_msg void OnBnClickedFiletrans();
 };
 

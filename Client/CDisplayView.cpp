@@ -23,7 +23,6 @@ CDisplayView::CDisplayView()
 {
 	hCommSock = 0;
 	memset(&servAdr, 0, sizeof(servAdr));
-	dlg = NULL;
 }
 
 CDisplayView::~CDisplayView()
@@ -62,7 +61,6 @@ BEGIN_MESSAGE_MAP(CDisplayView, CFormView)
 	ON_BN_CLICKED(IDC_DELETE2, &CDisplayView::OnBnClickedDelete2)
 	ON_BN_CLICKED(IDC_SENDMSG, &CDisplayView::OnBnClickedSendmsg)
 	ON_BN_CLICKED(IDC_SENDMSGALL, &CDisplayView::OnBnClickedSendmsgall)
-	ON_BN_CLICKED(IDC_SENDFILE, &CDisplayView::OnBnClickedSendfile)
 	ON_BN_CLICKED(IDC_FILETRANS, &CDisplayView::OnBnClickedFiletrans)
 END_MESSAGE_MAP()
 
