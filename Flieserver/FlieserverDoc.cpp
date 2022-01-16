@@ -735,7 +735,7 @@ void CFlieserverDoc::state7_fsm(SOCKET hSocket)
 			ASSERT(errSend != WSAEWOULDBLOCK);
 		}
 		//数据报文中的序号被我忽略了，按理说，可以做一个判断
-		temp = chunk_recv_buf + 1;
+		temp = chunk_recv_buf + 4;
 		u_short data_len = ntohs(*(u_short*)temp);
 		temp = temp + 2;
 		m_linkInfo.SFMap[hSocket]->leftToTrans -= data_len;
