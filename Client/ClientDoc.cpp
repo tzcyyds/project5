@@ -268,85 +268,72 @@ void CClientDoc::socket_state3_fsm(SOCKET s)
 			UpdateMsg(pView->Msg_list, from, to, recvtext, RGB(0, 0, 255), 15);
 		}
 		break;
-	case 53:
+	case 24:
 	{
 		//收到服务器中转类型请求报文
-		temp = recvbuf + 3;
-		char User1NameLen = 0;
-		char User2NameLen = 0;
-		User1NameLen = *(char*)temp;
-		temp = temp + 1;
-		CString User1Name(temp, User1NameLen);
-		temp = temp + User1NameLen;
-		User2NameLen = *(char*)temp;
-		temp = temp + 1;
-		CString User2Name(temp, User2NameLen);
-		temp = temp + User2NameLen;
-		u_short namelen = ntohs(*(u_short*)temp);
-		temp = temp + 2;
-		CString downloadName(temp, namelen);//文件名（不包含路径）
-		temp = temp + namelen;
+		char mynameL = recvbuf[3];//接收消息用户名长度
+		CString myname(&recvbuf[5], mynameL);//理论上应该是本机名字
+		char peernameL = recvbuf[4];//发送消息用户名长度
+		CString peername(&recvbuf[5 + mynameL], peernameL);
+		u_short file_nameLen = packet_len - (5 + mynameL + peernameL) - 4;
+		temp = recvbuf + 5 + mynameL + peernameL;
+		CString downloadName(temp, file_nameLen);//文件名（不包含路径）
+		temp = recvbuf + packet_len - 4;
 		u_long fileLength = ntohl(*(u_long*)temp);
-		pView->leftToRecv = fileLength;//会自动转换类型
-		char desktop[MAX_PATH] = { 0 };
-		SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
-		CString fileAbsPath = desktop;
-		CString fileExt = downloadName;
-		fileAbsPath = fileAbsPath + "\\" + fileExt;
-		//本地打开，接收上传文件
-		//这里判断逻辑稍复杂，区分了共享和独享两种情况
-		if (!((event == 53 && (pView->downloadFile.Open(fileAbsPath.GetString(),
-			CFile::modeCreate | CFile::modeWrite | CFile::typeBinary,
-			&pView->errFile)))))
-		{
-			char errOpenFile[256];
-			pView->errFile.GetErrorMessage(errOpenFile, 255);
-			TRACE("\nError occurred while opening file:\n"
-				"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
-				pView->errFile.m_strFileName, errOpenFile,
-				pView->errFile.m_cause,
-				pView->errFile.m_lOsError);
-			//ASSERT(FALSE);
-			//回复拒绝上传
-			sendbuf[0] = 54;
-			temp = &sendbuf[1];
-			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
-			temp = temp + 2;
-			*(char*)temp = 2;
-			temp = temp + 1;
-			*(char*)temp = User1NameLen;
-			temp = temp + 1;
-			strcpy_s(temp, User1NameLen + 1, User1Name);
-			temp = temp + User1NameLen;
-			*(char*)temp = User2NameLen;
-			temp = temp + 1;
-			strcpy_s(temp, User2NameLen + 1, User2Name);
-			temp = temp + User2NameLen;
-			*(u_long*)temp = htonl(fileLength);
-			send(s, sendbuf, 10 + User1NameLen + User2NameLen, 0);
 
-		}
-		else
+		if (!downloadName.IsEmpty())
 		{
-			//回复允许上传
-			sendbuf[0] = 54;
-			temp = &sendbuf[1];
-			*(u_short*)temp = htons(10 + User1NameLen + User2NameLen);
-			temp = temp + 2;
-			*(char*)temp = 1;
-			temp = temp + 1;
-			*(char*)temp = User1NameLen;
-			temp = temp + 1;
-			strcpy_s(temp, User1NameLen + 1, User1Name);
-			temp = temp + User1NameLen;
-			*(char*)temp = User2NameLen;
-			temp = temp + 1;
-			strcpy_s(temp, User2NameLen + 1, User2Name);
-			temp = temp + User2NameLen;
-			*(u_long*)temp = htonl(fileLength);
-			send(s, sendbuf, 10 + User1NameLen + User2NameLen, 0);
-			pView->client_state = 10;
+			//弹出另存为对话框
+			CString fileExt = downloadName.Right(downloadName.GetLength() - downloadName.ReverseFind('.'));
+			char szFilters[MAX_PATH] = { 0 };//居然有可能太小
+			sprintf_s(szFilters, "(*%s)|*%s||", fileExt.GetString(), fileExt.GetString());
+			CFileDialog fileDlg(FALSE, NULL, downloadName,
+				OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, szFilters);
+
+			char desktop[MAX_PATH] = { 0 };
+			SHGetSpecialFolderPath(NULL, desktop, CSIDL_DESKTOP, FALSE);
+			fileDlg.m_ofn.lpstrInitialDir = desktop;//把默认路径设置为桌面
+
+			if (fileDlg.DoModal() == IDOK)
+			{
+				CString fileAbsPath = fileDlg.GetPathName();
+				if (fileDlg.GetFileExt() == "")
+				{
+					fileAbsPath += fileExt;
+				}
+				if (!(pView->downloadFile.Open(fileAbsPath.GetString(),
+					CFile::modeCreate | CFile::modeWrite | CFile::typeBinary, &pView->errFile)))
+				{
+					char errOpenFile[MAX_BUF_SIZE];
+					pView->errFile.GetErrorMessage(errOpenFile, 255);
+					TRACE("\nError occurred while opening file:\n"
+						"\tFile name: %s\n\tCause: %s\n\tm_cause = %d\n\t m_IOsError = %d\n",
+						pView->errFile.m_strFileName, errOpenFile, pView->errFile.m_cause, pView->errFile.m_lOsError);
+					return;
+				}
+				//已准备好，回应中转请求
+				sendbuf[0] = 25;
+				temp = sendbuf + 1;
+				*(u_short*)temp = htons(5 + mynameL + peernameL + 1);
+				//翻转收发方
+				sendbuf[3] = peernameL;
+				sendbuf[4] = mynameL;
+				//temp = sendbuf + 3; *(u_short*)temp = htons(peernameL);
+				//temp = sendbuf + 5; *(u_short*)temp = htons(mynameL);
+				strcpy_s(&sendbuf[5], peernameL + mynameL + 1, peername + myname);
+				sendbuf[5 + mynameL + peernameL] = 1;//同意
+				send(pView->hCommSock, sendbuf, 5 + mynameL + peernameL + 1, 0);
+				pView->leftToRecv = fileLength;//会自动转换类型
+				pView->sequence = 0;
+				pView->client_state = 7;
+				socket_state7_fsm(s);// 等待数据，利用了downloadFile
+			}
+			else//取消下载或是不想接受中转
+			{
+
+			}
 		}
+		else;//文件名出错，不能为空
 	}
 	break;
 	default:
@@ -409,6 +396,37 @@ void CClientDoc::socket_state4_fsm(SOCKET s)
 			}
 		}
 		break;
+	case 25://收到回应中转
+	{
+		if (recvbuf[packet_len - 1] == 1) {//同意
+			if (pView->leftToSend > 0)
+			{	//第一次发数据报文
+				u_short readChunkSize = pView->uploadFile.Read(chunk_send_buf + 6, CHUNK_SIZE - 6);
+				temp = chunk_send_buf;
+				pView->sequence = 0;
+
+				chunk_send_buf[0] = 26;//中转数据报文
+				temp = temp + 1;
+				*(u_short*)temp = htons(readChunkSize + 6);//不可能溢出，因为最大4096+6
+				temp = temp + 2;
+				*temp = pView->sequence;
+				temp = temp + 1;
+				*(u_short*)temp = htons(readChunkSize);
+
+				if (UploadOnce(chunk_send_buf, readChunkSize + 6) == FALSE)
+				{
+					DWORD errSend = WSAGetLastError();
+					TRACE("\nError occurred while sending file chunks\n"
+						"\tGetLastError = %d\n", errSend);
+					ASSERT(errSend != WSAEWOULDBLOCK);
+				}
+				pView->leftToSend -= readChunkSize;
+				(pView->sequence)++;//序号递增,表示准备发送下一个数据报文
+			}
+			pView->client_state = 5;
+		}
+	}
+	break;
 	case 21:
 	{
 		//用户列表初始化
@@ -474,7 +492,6 @@ void CClientDoc::socket_state5_fsm(SOCKET s)
 					//close
 					pView->uploadFile.Close();
 					pView->client_state = 3;
-					//肯定是发方先回到主状态，此时还有一个悬而未决的ack报文，必须处理，否则会阻碍后续的传输？？不会，那个ack被扔了
 				}
 				else {
 					TRACE("leftToSend error!!!/n");
@@ -487,6 +504,56 @@ void CClientDoc::socket_state5_fsm(SOCKET s)
 		break;
 	case 9://收到重传确认
 		break;
+	case 27://收到中转数据确认
+	{
+		if (recvbuf[3] == pView->sequence) {
+
+			if (pView->leftToSend > 0)
+			{	//准备下一次的数据报文
+				u_short readChunkSize = pView->uploadFile.Read(chunk_send_buf + 6, CHUNK_SIZE - 6);//不会溢出
+				chunk_send_buf[0] = 26;//发送下一次的数据报文
+				temp = chunk_send_buf + 1;
+				*(u_short*)temp = htons(readChunkSize + 6);
+				temp = temp + 2;
+				*temp = pView->sequence;
+				temp = temp + 1;
+				*(u_short*)temp = htons(readChunkSize);
+
+				if (UploadOnce(chunk_send_buf, readChunkSize + 6) == FALSE)
+				{
+					DWORD errSend = WSAGetLastError();
+					TRACE("\nError occurred while sending file chunks\n"
+						"\tGetLastError = %d\n", errSend);
+					ASSERT(errSend != WSAEWOULDBLOCK);
+				}
+				pView->leftToSend -= readChunkSize;
+				(pView->sequence)++;//表示准备发送下一个数据报文
+				pView->client_state = 5;
+			}
+			else if (pView->leftToSend == 0) {
+				//close
+				pView->uploadFile.Close();
+				pView->client_state = 3;
+				//肯定是发方先回到主状态，此时还有一个悬而未决的ack报文，必须处理，否则会阻碍后续的传输？？不会，那个ack被扔了
+				//不对的！其实是收方先发送完最后一个ack，再意识到leftToSend=0，然后回到主状态。
+				//之后，发方收到ack，才能意识到leftToSend=0，再关闭文件，回主状态。
+				char sendbuf[5] = { 0 };
+				sendbuf[0] = 28;
+				temp = sendbuf + 1;
+				*(u_short*)temp = htons(4);
+				sendbuf[3] = pView->sequence;//填充
+				send(s, sendbuf, 4, 0);
+				//pView->sequence = 0;
+			}
+			else {
+				TRACE("leftToSend error!!!/n");
+			}
+		}
+		else {
+			//报文序号错误，不予发送下一个
+		}
+	}
+		break;
 	case 21:
 	{
 		//用户列表初始化
@@ -494,7 +561,7 @@ void CClientDoc::socket_state5_fsm(SOCKET s)
 		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
 		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
 	}
-	break;
+		break;
 	default:
 		break;
 	}
@@ -524,20 +591,20 @@ void CClientDoc::socket_state6_fsm(SOCKET s)
 	switch (event)
 	{
 	case 12://收到回应下载请求
-		{
-			if (recvbuf[3] == 1) {
-				temp = &recvbuf[4];
-				pView->leftToRecv = ntohl(*(u_long*)temp);
-				pView->sequence = 0;
-				socket_state7_fsm(s);
-				//pView->client_state = 7;
-			}
-			else {
-				//服务器拒绝下载请求
-				pView->client_state = 3;
-			}
+	{
+		if (recvbuf[3] == 1) {
+			temp = &recvbuf[4];
+			pView->leftToRecv = ntohl(*(u_long*)temp);
+			pView->sequence = 0;
+			socket_state7_fsm(s);
+			//pView->client_state = 7;
 		}
-		break;
+		else {
+			//服务器拒绝下载请求
+			pView->client_state = 3;
+		}
+	}
+	break;
 	case 21:
 	{
 		//用户列表初始化
@@ -575,44 +642,84 @@ void CClientDoc::socket_state7_fsm(SOCKET s)
 	switch (event)
 	{
 	case 7://收到下载数据
-		{
-			u_int writeChunkSize = (pView->leftToRecv < CHUNK_SIZE - 6) ? pView->leftToRecv : CHUNK_SIZE - 6;//#define CHUNK_SIZE 4096
-			if (RecvOnce(chunk_recv_buf, writeChunkSize + 3) == FALSE)//太奇怪了，这里为啥要加3才能收完所有数据？
-			{	//奥！因为前面多收了sequence和data_len
-				//淦，还要考虑两个边界，最大只能收4093个
-				DWORD errSend = WSAGetLastError();
-				TRACE("\nError occurred while receiving file chunks\n"
-					"\tGetLastError = %d\n", errSend);
-				ASSERT(errSend != WSAEWOULDBLOCK);
-			}
-			temp = chunk_recv_buf + 1;
-			u_short data_len = ntohs(*(u_short*)temp);
-			temp = temp + 2;
-			pView->leftToRecv -= data_len;
-			pView->downloadFile.Write(temp, (UINT)data_len);
-			//发送ack
-			(pView->sequence)++;
-			sendbuf[0] = 8;//char不用转换字节序
-			temp = sendbuf + 1;
-			*(u_short*)temp = htons(4);
-			temp = temp + 2;
-			*temp = pView->sequence;
-			send(s, sendbuf, 4, 0);
-			//收数据的逻辑必须这么写，不然很可能导致死锁，即停在7状态出不去
-			if (pView->leftToRecv > 0) {
-				pView->client_state = 7;
-			}
-			else if(pView->leftToRecv == 0) {
-				//记得要close文件句柄
-				pView->downloadFile.Close();
-				//好像应该重新初始化这个文件，不然会出问题的
-				pView->sequence = 0;
-				pView->client_state = 3;
-			}
-			else {
-				TRACE("leftToSend error!!!/n");
-			}
+	{
+		u_int writeChunkSize = (pView->leftToRecv < CHUNK_SIZE - 6) ? pView->leftToRecv : CHUNK_SIZE - 6;//#define CHUNK_SIZE 4096
+		if (RecvOnce(chunk_recv_buf, writeChunkSize + 3) == FALSE)//太奇怪了，这里为啥要加3才能收完所有数据？
+		{	//奥！因为前面多收了sequence和data_len
+			//淦，还要考虑两个边界，最大只能收4093个
+			DWORD errSend = WSAGetLastError();
+			TRACE("\nError occurred while receiving file chunks\n"
+				"\tGetLastError = %d\n", errSend);
+			ASSERT(errSend != WSAEWOULDBLOCK);
 		}
+		temp = chunk_recv_buf + 1;
+		u_short data_len = ntohs(*(u_short*)temp);
+		temp = temp + 2;
+		pView->leftToRecv -= data_len;
+		pView->downloadFile.Write(temp, (UINT)data_len);
+		//发送ack
+		(pView->sequence)++;
+		sendbuf[0] = 8;//char不用转换字节序
+		temp = sendbuf + 1;
+		*(u_short*)temp = htons(4);
+		temp = temp + 2;
+		*temp = pView->sequence;
+		send(s, sendbuf, 4, 0);
+		//收数据的逻辑必须这么写，不然很可能导致死锁，即停在7状态出不去
+		if (pView->leftToRecv > 0) {
+			pView->client_state = 7;
+		}
+		else if (pView->leftToRecv == 0) {
+			//记得要close文件句柄
+			pView->downloadFile.Close();
+			//好像应该重新初始化这个文件，不然会出问题的
+			pView->sequence = 0;
+			pView->client_state = 3;
+		}
+		else {
+			TRACE("leftToSend error!!!/n");
+		}
+	}
+	break;
+	case 26://收到中转数据
+	{
+		u_int writeChunkSize = (pView->leftToRecv < CHUNK_SIZE - 6) ? pView->leftToRecv : CHUNK_SIZE - 6;//#define CHUNK_SIZE 4096
+		if (RecvOnce(chunk_recv_buf, writeChunkSize + 3) == FALSE)//太奇怪了，这里为啥要加3才能收完所有数据？
+		{	//奥！因为前面多收了sequence和data_len
+			//淦，还要考虑两个边界，最大只能收4093个
+			DWORD errSend = WSAGetLastError();
+			TRACE("\nError occurred while receiving file chunks\n"
+				"\tGetLastError = %d\n", errSend);
+			ASSERT(errSend != WSAEWOULDBLOCK);
+		}
+		temp = chunk_recv_buf + 1;
+		u_short data_len = ntohs(*(u_short*)temp);
+		temp = temp + 2;
+		pView->leftToRecv -= data_len;
+		pView->downloadFile.Write(temp, (UINT)data_len);
+		//发送ack
+		(pView->sequence)++;
+		sendbuf[0] = 27;//char不用转换字节序
+		temp = sendbuf + 1;
+		*(u_short*)temp = htons(4);
+		temp = temp + 2;
+		*temp = pView->sequence;
+		send(s, sendbuf, 4, 0);
+		//收数据的逻辑必须这么写，不然很可能导致死锁，即停在7状态出不去
+		if (pView->leftToRecv > 0) {
+			pView->client_state = 7;
+		}
+		else if (pView->leftToRecv == 0) {
+			//记得要close文件句柄
+			pView->downloadFile.Close();
+			//好像应该重新初始化这个文件，不然会出问题的
+			pView->sequence = 0;
+			pView->client_state = 3;
+		}
+		else {
+			TRACE("leftToSend error!!!/n");
+		}
+	}
 		break;
 	case 21:
 	{
@@ -620,233 +727,6 @@ void CClientDoc::socket_state7_fsm(SOCKET s)
 		CString user_list(&recvbuf[3], packet_len - 3);
 		//strcpy((char*)(user_list.GetBufferSetLength(packet_len - 3)), &recvbuf[3]);//安全
 		UpdateDir(pView->UserList, user_list);//以同样方式更新用户列表
-	}
-	break;
-	default:
-		break;
-	}
-}
-
-void CClientDoc::socket_state8_fsm(SOCKET s)
-{
-	POSITION pos = GetFirstViewPosition();
-	pView = (CDisplayView*)GetNextView(pos);
-
-	char chunk_send_buf[CHUNK_SIZE] = { 0 };
-	char recvbuf[MAX_BUF_SIZE] = { 0 };
-	char* temp = nullptr;
-	char event;
-	u_short packet_len;
-	int strLen = recv(s, recvbuf, 3, 0);
-	if (strLen == 3) {
-		event = recvbuf[0];
-		temp = &recvbuf[1];
-		packet_len = ntohs(*(u_short*)temp);
-		assert(packet_len > 3);
-		strLen = recv(s, recvbuf + 3, packet_len - 3, 0);
-		assert(strLen == packet_len - 3);
-	}
-	else return;
-
-	switch (event)
-	{
-	case 54://收到回应上传请求
-	{
-		if (recvbuf[3] == 1) {
-			if (pView->leftToSend > 0)
-			{	//第一次发数据报文
-				u_short readChunkSize = pView->uploadFile.Read(chunk_send_buf + 6, CHUNK_SIZE - 6);
-				temp = chunk_send_buf;
-				pView->sequence = 0;
-
-				chunk_send_buf[0] = 7;
-				temp = temp + 1;
-				*(u_short*)temp = htons(readChunkSize + 6);//不可能溢出，因为最大4096+6
-				temp = temp + 2;
-				*temp = pView->sequence;
-				temp = temp + 1;
-				*(u_short*)temp = htons(readChunkSize);
-
-				if (UploadOnce(chunk_send_buf, readChunkSize + 6) == FALSE)
-				{
-					DWORD errSend = WSAGetLastError();
-					TRACE("\nError occurred while sending file chunks\n"
-						"\tGetLastError = %d\n", errSend);
-					ASSERT(errSend != WSAEWOULDBLOCK);
-				}
-				pView->leftToSend -= readChunkSize;
-				(pView->sequence)++;//序号递增,表示准备发送下一个数据报文
-			}
-			pView->client_state = 9;
-		}
-		else if(recvbuf[3] == 2){
-			pView->client_state = 3;
-		}
-	}
-	break;
-	default:
-		break;
-	}
-}
-void CClientDoc::socket_state9_fsm(SOCKET s)
-{
-	POSITION pos = GetFirstViewPosition();
-	pView = (CDisplayView*)GetNextView(pos);
-	char chunk_send_buf[CHUNK_SIZE] = { 0 };
-	char recvbuf[MAX_BUF_SIZE] = { 0 };
-	char* temp = nullptr;
-	char event;
-	u_short packet_len;
-	int strLen = recv(s, recvbuf, 3, 0);
-	if (strLen == 3) {
-		event = recvbuf[0];
-		temp = &recvbuf[1];
-		packet_len = ntohs(*(u_short*)temp);
-		assert(packet_len > 3);
-		strLen = recv(s, recvbuf + 3, packet_len - 3, 0);
-		assert(strLen == packet_len - 3);
-	}
-	else return;
-
-	switch (event)
-	{
-	case 8://收到上传确认
-	{
-		if (recvbuf[3] == pView->sequence) {
-
-			if (pView->leftToSend > 0)
-			{	//准备下一次的数据报文
-				u_short readChunkSize = pView->uploadFile.Read(chunk_send_buf + 6, CHUNK_SIZE - 6);//不会溢出
-				chunk_send_buf[0] = 7;
-				temp = chunk_send_buf + 1;
-				*(u_short*)temp = htons(readChunkSize + 6);
-				temp = temp + 2;
-				*temp = pView->sequence;
-				temp = temp + 1;
-				*(u_short*)temp = htons(readChunkSize);
-
-				if (UploadOnce(chunk_send_buf, readChunkSize + 6) == FALSE)
-				{
-					DWORD errSend = WSAGetLastError();
-					TRACE("\nError occurred while sending file chunks\n"
-						"\tGetLastError = %d\n", errSend);
-					ASSERT(errSend != WSAEWOULDBLOCK);
-				}
-				pView->leftToSend -= readChunkSize;
-				(pView->sequence)++;//表示准备发送下一个数据报文
-				pView->client_state = 9;
-			}
-			else if (pView->leftToSend == 0) {
-				//close
-				pView->uploadFile.Close();
-				pView->client_state = 3;
-				//肯定是发方先回到主状态，此时还有一个悬而未决的ack报文，必须处理，否则会阻碍后续的传输？？不会，那个ack被扔了
-			}
-			else {
-				TRACE("leftToSend error!!!/n");
-			}
-		}
-		else {
-			//报文序号错误，不予发送下一个
-		}
-	}
-	break;
-	case 9://收到重传确认
-		break;
-	case 21:
-	{
-
-	}
-	case 55://收到传输完毕报文
-	{
-		if ((pView->leftToSend == 0)&&(recvbuf[4] == 1)) {
-			pView->sequence = 0;
-			pView->uploadFile.Close();
-			pView->client_state = 3;
-		}
-		else {
-			TRACE("Trans error!!!/n");
-		}
-	}
-	break;
-	default:
-		break;
-	}
-}
-void CClientDoc::socket_state10_fsm(SOCKET hSocket)
-{
-	char chunk_recv_buf[CHUNK_SIZE] = { 0 };
-	char sendbuf[MAX_BUF_SIZE] = { 0 };
-	char recvbuf[MAX_BUF_SIZE] = { 0 };
-	char* temp = nullptr;
-	char event;
-	u_short packet_len;
-	int strLen = recv(hSocket, recvbuf, 3, 0);
-	if (strLen == 3) {
-		event = recvbuf[0];
-		temp = &recvbuf[1];
-		packet_len = ntohs(*(u_short*)temp);//此处用不到
-		//assert(packet_len > 3);
-		//此处将要接收数据报文，应该换更大的buf
-	}
-	else return;
-
-	switch (event)
-	{
-	case 7://收到上传数据
-	{
-		u_int writeChunkSize = (pView->leftToRecv < CHUNK_SIZE - 6) ? pView->leftToRecv : CHUNK_SIZE - 6;//#define CHUNK_SIZE 4096
-		if (RecvOnce(chunk_recv_buf, writeChunkSize + 3) == FALSE)//太奇怪了，这里为啥要加3才能收完所有数据？
-		{//奥！因为前面多收了sequence和data_len
-		//淦，还要考虑两个边界，最大只能收4093个
-			DWORD errSend = WSAGetLastError();
-			TRACE("\nError occurred while receiving file chunks\n"
-				"\tGetLastError = %d\n", errSend);
-			ASSERT(errSend != WSAEWOULDBLOCK);
-		}
-		//数据报文中的序号被我忽略了，按理说，可以做一个判断
-		temp = chunk_recv_buf + 1;
-		u_short data_len = ntohs(*(u_short*)temp);
-		temp = temp + 2;
-		pView->leftToRecv -= data_len;
-		pView->downloadFile.Write(temp, (UINT)data_len);
-
-		//收数据的逻辑必须这么写，不然很可能导致死锁，即停在4状态出不去
-		if (pView->leftToRecv > 0) {
-			// 发送ack
-			pView->sequence++;//序号递增，编译器默认为unsigned char，溢出也无所谓
-			sendbuf[0] = 8;//char不用转换字节序
-			temp = sendbuf + 1;
-			*(u_short*)temp = htons(4);
-			temp = temp + 2;
-			*temp = pView->sequence;//表示期待下一个报文
-			send(hSocket, sendbuf, 4, 0);
-			pView->client_state = 10;
-		}
-		else if (pView->leftToRecv == 0)
-		{
-			// 发送传输完毕
-			pView->sequence++;//序号递增，编译器默认为unsigned char，溢出也无所谓
-			sendbuf[0] = 55;//char不用转换字节序
-			temp = sendbuf + 1;
-			*(u_short*)temp = htons(5);
-			temp = temp + 2;
-			*temp = pView->sequence;//表示期待下一个报文
-			temp = temp + 1;
-			*temp = 1;
-			send(hSocket, sendbuf, 5, 0);
-			//记得要close文件句柄
-			CString downloadName = pView->downloadFile.GetFileName();
-			pView->downloadFile.Close();
-			//好像应该重新初始化这个文件，不然会出问题的
-			pView->sequence = 0;
-			pView->client_state = 3;
-
-		}
-		else
-		{
-			TRACE("leftToSend error!!!/n");
-		}
 	}
 	break;
 	default:

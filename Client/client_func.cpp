@@ -162,32 +162,27 @@ bool Transfer(CDisplayView* pView) {
 		//获取客户1，客户2信息
 		CString User2Name;
 		pView->UserList.GetText(pView->UserList.GetCurSel(), User2Name);
-		char User1NameLen = pView->m_user.GetLength();
-		char User2NameLen = User2Name.GetLength();
+		char mynameL = pView->m_user.GetLength();
+		char peernameL = User2Name.GetLength();
 		//获取文件信息
 		u_short namelen = uploadName.GetLength();//此处有可能丢失信息
 		ULONGLONG fileLength = pView->uploadFile.GetLength();//64位
+		u_short packet_Len = 9 + peernameL + mynameL +  namelen;
 		//装填中转请求报文
-		sendbuf[0] = 51;
+		sendbuf[0] = 24;
 		temp = &sendbuf[1];
-		*(u_short*)temp = htons(11 + User1NameLen + User2NameLen + namelen);
-		sendbuf[3] = User1NameLen;
-		temp = &sendbuf[4];
-		strcpy_s(sendbuf + 4, User1NameLen + 1, pView->m_user);
-		temp = temp + User1NameLen;
-		*(char*)temp = User2NameLen;
-		temp = temp + 1;
-		strcpy_s(temp, User2NameLen + 1, User2Name);
-		temp = temp + User2NameLen;
-		*(u_short*)temp = htons(namelen);
-		temp = temp + 2;
-		strcpy_s(temp, namelen + 1, uploadName);
-		temp = temp + namelen;
+		*(u_short*)temp = htons(packet_Len);
+		sendbuf[3] = peernameL;
+		sendbuf[4] = mynameL;
+		strcpy_s(sendbuf + 5
+			, peernameL + mynameL + namelen + 1
+			, User2Name + pView->m_user + uploadName);
+		temp = sendbuf + packet_Len - 4;
 		*(u_long*)temp = htonl((u_long)fileLength);
 
 		pView->leftToSend = fileLength;
-		send(pView->hCommSock, sendbuf, 11 + User1NameLen + User2NameLen + namelen, 0);
-		pView->client_state = 8;
+		send(pView->hCommSock, sendbuf, packet_Len, 0);
+		pView->client_state = 4;//等待上传确认状态
 	}
 	return 1;
 }

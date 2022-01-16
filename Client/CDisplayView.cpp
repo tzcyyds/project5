@@ -120,15 +120,6 @@ LRESULT CDisplayView::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 			case 7://等待下载数据状态
 				pDoc->socket_state7_fsm(hSocket);
 				break;
-			case 8://等待客户2请求回复状态
-				pDoc->socket_state8_fsm(hSocket);
-				break;
-			case 9://等待中转数据回复状态
-				pDoc->socket_state9_fsm(hSocket);
-				break;
-			case 10://等待中转数据状态
-				pDoc->socket_state10_fsm(hSocket);
-				break;
 			default:
 				break;
 			}
@@ -198,7 +189,7 @@ void CDisplayView::OnBnClickedEnterdir2()
 {
 	if (client_state == 3) {
 		if (Enterdir(hCommSock, FileName2, strdirpath2)) {
-
+			//这里用的是引用，所以会改变strdirpath2的值
 		}
 		else {
 			AfxMessageBox("failed");
