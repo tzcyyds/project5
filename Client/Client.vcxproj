@@ -29,7 +29,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
@@ -184,7 +184,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CDisplayView.h" />
-    <ClInclude Include="ChatWnd.h" />
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientDoc.h" />
     <ClInclude Include="client_func.h" />
@@ -196,7 +195,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDisplayView.cpp" />
-    <ClCompile Include="ChatWnd.cpp" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientDoc.cpp" />
     <ClCompile Include="client_func.cpp" />

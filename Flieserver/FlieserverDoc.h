@@ -28,11 +28,8 @@ public:
 	void state3_fsm(SOCKET hSocket);
 	void state4_fsm(SOCKET hSocket);
 	void state5_fsm(SOCKET hSocket);
-	void state6_fsm(SOCKET hSocket);
 	void state7_fsm(SOCKET hSocket);
-	void state8_fsm(SOCKET hSocket);
 	void state9_fsm(SOCKET hSocket);
-	void state10_fsm(SOCKET hSocket);
 	void state11_fsm(SOCKET hSocket);
 	void state_event_interface(SOCKET hSocket, char* buftemp, u_short buflen);
 	void state3_fsm_internal(SOCKET hSocket, char* buftemp, u_short buflen);

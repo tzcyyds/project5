@@ -42,9 +42,6 @@
     <ClInclude Include="client_func.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ChatWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp">
@@ -63,9 +60,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="client_func.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ChatWnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

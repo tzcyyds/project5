@@ -521,17 +521,8 @@ void CFlieserverDoc::state3_fsm(SOCKET hSocket)
 	{
 		temp = recvbuf + 3;
 		u_short tar_userlen = ntohs(*(u_short*)temp);//目标用户名长度
-		CString tar_user(&recvbuf[7], tar_userlen);
-		SOCKET tarSock;
-		for (const auto& pair : m_linkInfo.SUMap)//遍历查找用户名对应的套接字
-		{
-			if (pair.second->username.c_str() == tar_user)
-			{
-				tarSock = pair.first;
-				break;
-			}
-		}
-		send(tarSock, recvbuf, packet_len, 0);//把报文转发给目标用户
+		std::string tar_user(&recvbuf[7], tar_userlen);
+		send(m_linkInfo.USMap.at(tar_user), recvbuf, packet_len, 0);//把报文转发给目标用户
 	}
 	break;
 	case 51://请求中转

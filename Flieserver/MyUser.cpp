@@ -42,4 +42,5 @@ void LinkInfo::myclear() {
 		SFMap.clear();
 	}
 	SUMap.clear();
+	SSMap.clear();
 }

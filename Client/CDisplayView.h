@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "pch.h"
-#include "ChatWnd.h"
 
 
 // CDispalyView 窗体视图
