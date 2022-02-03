@@ -13,7 +13,9 @@
 #include <propkey.h>
 #include <sstream>
 #include <string>
-#include <unordered_map>
+//#include <unordered_map>
+#include <map>
+#include <vector>
 #include <forward_list>
 #include <fstream>
 //view和doc共用的表达式/宏

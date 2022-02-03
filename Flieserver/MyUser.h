@@ -1,7 +1,6 @@
 #pragma once
 #include "pch.h"
 
-
 struct User
 {
 	IN_ADDR ip = { 0 };
@@ -36,7 +35,7 @@ public:
 	~UserDoc();
 
 public:
-	std::unordered_map<std::string, std::string> UserDocMap;
+	std::map<std::string, std::string> UserDocMap;
 	void writeP();
 
 };
@@ -46,10 +45,10 @@ class LinkInfo
 public:
 	~LinkInfo();
 	void myclear();
-	std::unordered_map<SOCKET, User*> SUMap;
-	std::unordered_map<SOCKET, Fileinfo*> SFMap;
-	std::unordered_map<std::string, SOCKET> USMap;
-	std::unordered_map<SOCKET, SOCKET> SSMap;
+	std::map<SOCKET, User*> SUMap;
+	std::map<SOCKET, Fileinfo*> SFMap;
+	std::map<std::string, SOCKET> USMap;
+	std::map<SOCKET, SOCKET> SSMap;
 };
 
 
